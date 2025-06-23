@@ -34,7 +34,7 @@ go build -o vorin
 
 ## Example
 
-Below is a real example of the tool running in a test environment (like `testphp.vulnweb.com`), showing detection of hidden directories and sensitive files:
+Below is a real example of the tool running in a test environment, showing detection of hidden directories and sensitive files:
 
 ![Scan Example](assets/screenshots/showing.png)
 
