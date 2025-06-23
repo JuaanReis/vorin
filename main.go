@@ -33,9 +33,9 @@ func printLine(char string, length int) {
 }
 
 func main() {
-	url := flag.String("u", "", "Target URL (use FUZZ as placeholder)")
+	url := flag.String("u", "", "Target URL")
 	threads := flag.Int("t", 50, "Number of concurrent threads")
-	wordlist := flag.String("w", "assets/wordlist/medium_paths.txt", "Path to wordlist")
+	wordlist := flag.String("w", "assets/wordlist/common.txt", "Path to wordlist")
 	method := flag.String("X", "GET", "HTTP Method (default: GET)")
 	flag.Parse()
 

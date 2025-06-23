@@ -1,50 +1,50 @@
 # Vorin - Web Directory & Admin Scanner
 
-**Vorin** é uma ferramenta de varredura para diretórios e caminhos ocultos em aplicações web. Escrita em Go, com foco em desempenho, simplicidade e clareza nos resultados. Inspirada em ferramentas como Gobuster e FFUF, mas com estilo próprio.
+**Vorin** is a web directory and admin path scanner tool written in Go. It's built for speed, simplicity, and clean output. Inspired by tools like Gobuster and FFUF, but with its own unique style.
 
-## Características
+## Features
 
-- Scan rápido com múltiplas threads
-- Suporte a wordlist customizada
-- Detecção de diretórios comuns, páginas administrativas, arquivos sensíveis
-- Saída colorida e limpa no terminal
-- Fácil de compilar e usar em qualquer sistema
+- Fast scanning with multithreading
+- Custom wordlist support
+- Detects common directories, admin panels, and sensitive files
+- Clean and colorful terminal output
+- Easy to compile and use on any OS
 
-## Instalação
+## Installation
 
 ```bash
-git clone https://github.com/JuaanReis/vorin.git
+git clone https://github.com/youruser/vorin.git
 cd vorin
 go build -o vorin
 ```
 
-## Uso
+## Usage
 
 ```bash
 ./vorin -u http://example.com -w wordlist.txt -t 50
 ```
 
-### Parâmetros
+### Parameters
 
-| Flag     | Descrição                                  |
-|----------|--------------------------------------------|
-| `-u`     | URL do alvo                                |
-| `-w`     | Caminho da wordlist                        |
-| `-t`     | Número de threads (padrão: 50)             |
+| Flag     | Description                               |
+|----------|-------------------------------------------|
+| `-u`     | Target URL                                |
+| `-w`     | Path to wordlist                          |
+| `-t`     | Number of threads (default: 50)           |
 
-## Exemplo de uso
+## Example
 
-Abaixo, um exemplo real de execução da ferramenta em ambiente de testes (como o site `testphp.vulnweb.com`), demonstrando a detecção de diretórios e arquivos sensíveis:
+Below is a real example of the tool running in a test environment (like `testphp.vulnweb.com`), showing detection of hidden directories and sensitive files:
 
-![Exemplo de Scan](assets/screenshots/showing.png)
+![Scan Example](assets/screenshots/showing.png)
 
-> Todos os testes foram realizados em ambiente seguro e controlado, sem impactar sistemas reais.
+> All tests were performed in a safe and controlled environment, without affecting any real systems.
 
 ## Wordlist
 
-Você pode usar qualquer wordlist personalizada. A recomendação é começar com uma lista leve e ir aumentando conforme necessidade.
+You can use any custom wordlist. It's recommended to start with a small list and scale up as needed.
 
-Exemplo de conteúdo:
+Example wordlist:
 
 ```
 admin
@@ -56,10 +56,10 @@ uploads
 includes
 ```
 
-## Segurança
+## Security
 
-Esta ferramenta foi criada para **uso educacional e profissional controlado**. O uso indevido contra sistemas sem autorização pode configurar crime conforme a legislação vigente.
+This tool is intended for **educational and professional testing purposes only**. Unauthorized use against systems may be illegal and is your responsibility.
 
 ## License
 
-MIT License. Consulte o arquivo `LICENSE` para mais detalhes.
+MIT License. See the `LICENSE` file for more details.
