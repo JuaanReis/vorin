@@ -62,4 +62,4 @@ This tool is intended for **educational and professional testing purposes only**
 
 ## License
 
-MIT License. See the `LICENSE` file for more details.
+GPL License. See the `LICENSE` file for more details.
