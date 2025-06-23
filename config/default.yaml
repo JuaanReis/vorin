@@ -1,0 +1,8 @@
+threads: 50
+timeout: 5
+user-agents:
+  - Mozilla/5.0 
+  - curl/7.81.0
+status_code_to_show:
+  - 200
+  - 403
