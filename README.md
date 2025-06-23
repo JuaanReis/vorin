@@ -56,6 +56,13 @@ uploads
 includes
 ```
 
+## Security & Responsibility
+
+This tool is intended strictly for educational, ethical hacking, and professional security testing in authorized environments.
+
+⚠️ Use it responsibly.
+⚠️ Any misuse is entirely your responsibility.
+I (the author) am not liable for any damage, legal consequences, or problems caused by improper or unauthorized use of this tool. Know the law and play by the rules.
 ## Security
 
 This tool is intended for **educational and professional testing purposes only**. Unauthorized use against systems may be illegal and is your responsibility.
