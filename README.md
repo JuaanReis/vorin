@@ -13,7 +13,7 @@
 ## Installation
 
 ```bash
-git clone https://github.com/youruser/vorin.git
+git clone https://github.com/JuaanReis/vorin.git
 cd vorin
 go build -o vorin
 ```
