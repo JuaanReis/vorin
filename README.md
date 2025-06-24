@@ -34,11 +34,8 @@ go build -o vorin
 | `-u`     | Target URL                                |
 | `-w`     | Path to wordlist                          |
 | `-t`     | Number of threads (default: 50)           |
-<<<<<<< HEAD
 | `-d`     | Timeout between requests                  |
-=======
 | `-d`     | Timeout between requests (default: 5)                  |
->>>>>>> 7030246 (Update README.md)
 
 ## Example
 
