@@ -31,6 +31,7 @@ go build -o vorin
 | `-u`     | Target URL                                |
 | `-w`     | Path to wordlist                          |
 | `-t`     | Number of threads (default: 50)           |
+| `-d`     | Timeout between requests                  |
 
 ## Example
 
