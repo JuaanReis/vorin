@@ -1,4 +1,4 @@
-package pkg
+package dirbrute
 
 import "fmt"
 
