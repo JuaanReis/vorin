@@ -1,3 +1,6 @@
+<img src="assets/banner/banner.png" alt="Banner" width="100%" height="170px">
+
+
 # Vorin - Web Directory & Admin Scanner
 
 **Vorin** is a web directory and admin path scanner tool written in Go. It's built for speed, simplicity, and clean output. Inspired by tools like Gobuster and FFUF, but with its own unique style.
@@ -31,7 +34,11 @@ go build -o vorin
 | `-u`     | Target URL                                |
 | `-w`     | Path to wordlist                          |
 | `-t`     | Number of threads (default: 50)           |
+<<<<<<< HEAD
 | `-d`     | Timeout between requests                  |
+=======
+| `-d`     | Timeout between requests (default: 5)                  |
+>>>>>>> 7030246 (Update README.md)
 
 ## Example
 
@@ -61,8 +68,8 @@ includes
 
 This tool is intended strictly for educational, ethical hacking, and professional security testing in authorized environments.
 
-⚠️ Use it responsibly.
-⚠️ Any misuse is entirely your responsibility.
+Use it responsibly.
+  Any misuse is entirely your responsibility.
 I (the author) am not liable for any damage, legal consequences, or problems caused by improper or unauthorized use of this tool. Know the law and play by the rules.
 ## Security
 
@@ -70,4 +77,4 @@ This tool is intended for **educational and professional testing purposes only**
 
 ## License
 
-GPL License. See the `LICENSE` file for more details.
+GPL License. See the [LICENSE](LICENSE) file for more details.

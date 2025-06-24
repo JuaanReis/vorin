@@ -31,7 +31,7 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 
 	file, err := pkg.ReadLines(wordlist)
 	if err != nil {
-		fmt.Println("[ERROR]:", err)
+		fmt.Printf("[ERROR]: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -44,13 +44,13 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 	pathAle := strings.TrimRight(enderecoBase, "/") + "/" + fakePath
 	respAle, error := http.Get(pathAle)
 	if error != nil {
-		fmt.Println("[ERROR]:", error)
+		fmt.Printf("[ERROR]: %s\n", error)
 		os.Exit(1)
 	}
 
 	bodyAle, err := io.ReadAll(respAle.Body)
 	if err != nil {
-		fmt.Println("[ERROR]:", err)
+		fmt.Printf("[ERROR]: %v\n", err)
 		os.Exit(1)
 	}
 	defer respAle.Body.Close()
@@ -72,13 +72,12 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 			start := time.Now()
 			resp, err := client.Get(finalURL)
 			if err != nil {
-				fmt.Printf("[ERROR GET] %s => %v\n", finalURL, err)
 				return
 			}
 			defer resp.Body.Close()
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				fmt.Printf("[ERROR] %s", err)
+				fmt.Printf("[ERROR] %s\n", err)
 			}
 			htmlSize := len(body)
 			title := getTitle(string(body))
