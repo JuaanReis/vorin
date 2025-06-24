@@ -21,7 +21,7 @@ go build -o vorin
 ## Usage
 
 ```bash
-./vorin -u http://example.com -w wordlist.txt -t 50 -d 5
+./vorin -u http://example.com/Fuzz -w wordlist.txt -t 50 -d 5
 ```
 
 ### Parameters
