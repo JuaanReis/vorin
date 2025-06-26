@@ -1,4 +1,4 @@
- package dirbrute
+package dirbrute
 
 import (
 	"fmt"
@@ -9,14 +9,15 @@ import (
 	"time"
 	"os"
 	"vorin/pkg"
+	"github.com/schollz/progressbar/v3"
 )
 
 type Resultado struct {
 	Status int
 	URL    string
-	Title string
-	Size int
-	Lines int
+	Title  string
+	Size   int
+	Lines  int
 }
 
 func Parser(endereco string, threads int, wordlist string, delay int) []Resultado {
@@ -24,7 +25,6 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 		delay = 5
 	}
 	var resultados []Resultado
-	var mu sync.Mutex
 	var wg sync.WaitGroup
 
 	sem := make(chan struct{}, threads)
@@ -39,12 +39,12 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 		Timeout: time.Duration(delay) * time.Second,
 	}
 
-	fakePath := "00"
+	fakePath := "01"
 	enderecoBase := strings.Replace(endereco, "Fuzz", "", -1)
 	pathAle := strings.TrimRight(enderecoBase, "/") + "/" + fakePath
-	respAle, error := http.Get(pathAle)
-	if error != nil {
-		fmt.Printf("[ERROR]: %s\n", error)
+	respAle, err := http.Get(pathAle)
+	if err != nil {
+		fmt.Printf("[ERROR]: %s\n", err)
 		os.Exit(1)
 	}
 
@@ -57,6 +57,13 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 	htmlAle := len(bodyAle)
 	titleAle := getTitle(string(bodyAle))
 
+	bar := progressbar.NewOptions(len(file),
+		progressbar.OptionSetDescription("Testing paths..."),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetWidth(30),
+		progressbar.OptionClearOnFinish(),
+	)
+
 	ini := time.Now()
 
 	for _, path := range file {
@@ -67,18 +74,38 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			finalURL := strings.Replace(endereco, "Fuzz", path, -1)
+			finalURL := strings.Replace(endereco, "Fuzz", p, -1)
 
 			start := time.Now()
-			resp, err := client.Get(finalURL)
+
+			req, err := http.NewRequest("GET", finalURL, nil)
 			if err != nil {
+				fmt.Printf("[ERROR]: %s", err)
+				os.Exit(1)
+			}
+
+			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+			req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+			req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+			req.Header.Set("Accept-Encoding", "gzip, deflate")
+			req.Header.Set("Connection", "keep-alive")
+			req.Header.Set("Upgrade-Insecure-Requests", "1")
+			req.Header.Set("Cache-Control", "max-age=0")
+
+			resp, err := client.Do(req)
+			if err != nil {
+				bar.Add(1)
 				return
 			}
 			defer resp.Body.Close()
 			body, err := io.ReadAll(resp.Body)
+
 			if err != nil {
 				fmt.Printf("[ERROR] %s\n", err)
+				bar.Add(1)
+				return
 			}
+
 			htmlSize := len(body)
 			title := getTitle(string(body))
 			content := string(body)
@@ -87,29 +114,34 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 
 			statusLabel, color := StatusColor(resp.StatusCode)
 
-			if resp.StatusCode >= 200 && resp.StatusCode < 400 && !content404(string(body)) && (title != titleAle || htmlSize != htmlAle)  {
+			if resp.StatusCode >= 200 && resp.StatusCode < 400 && !content404(string(body)) && htmlSize != 0 && (title != titleAle || htmlSize != htmlAle)  {
+
+				bar.Clear()
+
 				fmt.Printf("%s[%-3d]%s  /%-20s (Size: %-6dB, Lines: %-3d) %-6s %s\n",
 					color, resp.StatusCode, Reset,
-					path,
+					p,
 					htmlSize,
 					lines,
 					elapsed.Truncate(time.Millisecond),
 					statusLabel,
 				)
-
-				mu.Lock()
-				resultados = append(resultados, Resultado{
-					Status: resp.StatusCode,
-					URL:    finalURL,
-					Title: title,
-					Size: htmlSize,
-					Lines: lines,
-				})
-				mu.Unlock()
+				resultados = append(resultados, Resultado {
+        	Status: resp.StatusCode,
+        	URL:    finalURL,
+        	Title:  title,
+        	Size:   htmlSize,
+        	Lines:  lines,
+    		})
 			}
+
+			bar.Add(1)
 		}(path)
 	}
+
 	wg.Wait()
+	bar.Clear()
+
 	end := time.Since(ini)
 	fmt.Printf("\n%s[✓]%s Scan completed in %s\n", Green, Reset, end.Truncate(time.Millisecond))
 	return resultados

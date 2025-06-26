@@ -78,6 +78,6 @@ func main() {
 
 
 	if len(resultado) == 0 {
-		fmt.Println(dirbrute.Red + "[!!] No path found" + dirbrute.Reset)
+		fmt.Println(dirbrute.Red + "\n[!!] No path found" + dirbrute.Reset)
 	}
 }
