@@ -39,7 +39,7 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 		Timeout: time.Duration(delay) * time.Second,
 	}
 
-	fakePath := "01"
+	fakePath := "00"
 	enderecoBase := strings.Replace(endereco, "Fuzz", "", -1)
 	pathAle := strings.TrimRight(enderecoBase, "/") + "/" + fakePath
 	respAle, err := http.Get(pathAle)
