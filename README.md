@@ -24,7 +24,7 @@ go build -o vorin
 ## Usage
 
 ```bash
-./vorin -u http://example.com/Fuzz -w wordlist.txt -t 50 -d 5
+./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -d 1-3 -H "X-Debug: true" -H "Authorization: Bearer teste123" -timeout 5
 ```
 
 ### Parameters
@@ -35,6 +35,8 @@ go build -o vorin
 | `-w`     | Path to wordlist                          |
 | `-t`     | Number of threads (default: 50)           |
 | `-d`     | Timeout between requests                  |
+| `-H`     | Custom header                             |
+| `-timeout`| Connection timeout                       |
 
 ## Example
 

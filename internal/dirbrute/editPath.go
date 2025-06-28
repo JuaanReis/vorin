@@ -10,6 +10,8 @@ import (
 	"os"
 	"vorin/pkg"
 	"github.com/schollz/progressbar/v3"
+	"math/rand"
+	"compress/gzip"
 )
 
 type Resultado struct {
@@ -20,14 +22,14 @@ type Resultado struct {
 	Lines  int
 }
 
-func Parser(endereco string, threads int, wordlist string, delay int) []Resultado {
-	if delay == 0 {
-		delay = 5
-	}
+func Parser(endereco string, threads int, wordlist string, minDelay int, maxDelay int, timeout int, customHeaders map[string]string) []Resultado {
 	var resultados []Resultado
+	var mu sync.Mutex
 	var wg sync.WaitGroup
+	var reader io.Reader
 
 	sem := make(chan struct{}, threads)
+
 
 	file, err := pkg.ReadLines(wordlist)
 	if err != nil {
@@ -35,11 +37,14 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 		os.Exit(1)
 	}
 
-	client := http.Client{
-		Timeout: time.Duration(delay) * time.Second,
+	client := &http.Client{
+    Timeout: time.Duration(timeout) * time.Second,
+    CheckRedirect: func(req *http.Request, via []*http.Request) error {
+        return http.ErrUseLastResponse
+    },
 	}
 
-	fakePath := "00"
+	fakePath := "__vorin_this_should_not_exist_473827382__"
 	enderecoBase := strings.Replace(endereco, "Fuzz", "", -1)
 	pathAle := strings.TrimRight(enderecoBase, "/") + "/" + fakePath
 	respAle, err := http.Get(pathAle)
@@ -54,8 +59,9 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 		os.Exit(1)
 	}
 	defer respAle.Body.Close()
-	htmlAle := len(bodyAle)
-	titleAle := getTitle(string(bodyAle))
+	structureOnly := cleanStructure(string(bodyAle))
+	fakeStructureSize := len(structureOnly)
+	titleAle := strings.TrimSpace(strings.ToLower(getTitle(string(bodyAle))))
 
 	bar := progressbar.NewOptions(len(file),
 		progressbar.OptionSetDescription("Testing paths..."),
@@ -73,6 +79,10 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 		go func(p string) {
 			defer wg.Done()
 			defer func() { <-sem }()
+			defer bar.Add(1)
+
+			delay := rand.Intn(maxDelay - minDelay + 1) + minDelay
+			time.Sleep(time.Duration(delay) * time.Second)
 
 			finalURL := strings.Replace(endereco, "Fuzz", p, -1)
 
@@ -92,33 +102,51 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 			req.Header.Set("Upgrade-Insecure-Requests", "1")
 			req.Header.Set("Cache-Control", "max-age=0")
 
+			for key, val := range customHeaders {
+				req.Header.Set(key, val)
+			}
+
 			resp, err := client.Do(req)
 			if err != nil {
-				bar.Add(1)
 				return
 			}
 			defer resp.Body.Close()
-			body, err := io.ReadAll(resp.Body)
 
+			if resp.Header.Get("Content-Encoding") == "gzip" {
+				gzipReader, err := gzip.NewReader(resp.Body)
+			if err != nil {
+				fmt.Printf("[ERROR]: gzip decode error: %v\n", err)
+				return
+			}
+			defer gzipReader.Close()
+
+			reader = gzipReader
+			} else {
+				reader = resp.Body
+			}
+
+			body, err := io.ReadAll(reader)
 			if err != nil {
 				fmt.Printf("[ERROR] %s\n", err)
-				bar.Add(1)
 				return
 			}
 
+			structureOnly := cleanStructure(string(body))
+			structureSize := len(structureOnly)
 			htmlSize := len(body)
-			title := getTitle(string(body))
+			title := strings.TrimSpace(strings.ToLower(getTitle(string(body))))
 			content := string(body)
 			lines := len(strings.Split(content, "\n"))
 			elapsed := time.Since(start)
 
 			statusLabel, color := StatusColor(resp.StatusCode)
+			isSameContent := title == titleAle || structureSize == fakeStructureSize
 
-			if resp.StatusCode >= 200 && resp.StatusCode < 400 && !content404(string(body)) && htmlSize != 0 && (title != titleAle || htmlSize != htmlAle)  {
-
-				bar.Clear()
-
-				fmt.Printf("%s[%-3d]%s  /%-20s (Size: %-6dB, Lines: %-3d) %-6s %s\n",
+			if (resp.StatusCode >= 200 && resp.StatusCode < 399) &&
+				!content404(content) &&
+				!isSameContent  {
+					bar.Clear()
+					fmt.Printf("%s[%-3d]%s  /%-20s (Size: %-6dB, Lines: %-3d) %-6s %s\n",
 					color, resp.StatusCode, Reset,
 					p,
 					htmlSize,
@@ -126,16 +154,16 @@ func Parser(endereco string, threads int, wordlist string, delay int) []Resultad
 					elapsed.Truncate(time.Millisecond),
 					statusLabel,
 				)
-				resultados = append(resultados, Resultado {
-        	Status: resp.StatusCode,
-        	URL:    finalURL,
-        	Title:  title,
-        	Size:   htmlSize,
-        	Lines:  lines,
-    		})
+				mu.Lock()
+				resultados = append(resultados, Resultado{
+					Status: resp.StatusCode,
+					URL:    finalURL,
+					Title:  title,
+					Size:   htmlSize,
+					Lines:  lines,
+				})
+				mu.Unlock()
 			}
-
-			bar.Add(1)
 		}(path)
 	}
 
