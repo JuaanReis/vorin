@@ -20,9 +20,12 @@ type Resultado struct {
 	Title  string
 	Size   int
 	Lines  int
+	Time time.Duration
+	Label string
+	Color string
 }
 
-func Parser(endereco string, threads int, wordlist string, minDelay int, maxDelay int, timeout int, customHeaders map[string]string) []Resultado {
+func Parser(endereco string, threads int, wordlist string, minDelay int, maxDelay int, timeout int, customHeaders map[string]string, code map[int]bool) []Resultado {
 	var resultados []Resultado
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -139,28 +142,24 @@ func Parser(endereco string, threads int, wordlist string, minDelay int, maxDela
 			lines := len(strings.Split(content, "\n"))
 			elapsed := time.Since(start)
 
-			statusLabel, color := StatusColor(resp.StatusCode)
 			isSameContent := title == titleAle || structureSize == fakeStructureSize
+			tm := elapsed.Truncate(time.Millisecond)
+			statusLabel, color := StatusColor(resp.StatusCode)
 
-			if (resp.StatusCode >= 200 && resp.StatusCode < 399) &&
+			if code[resp.StatusCode] &&
 				!content404(content) &&
 				!isSameContent  {
 					bar.Clear()
-					fmt.Printf("%s[%-3d]%s  /%-20s (Size: %-6dB, Lines: %-3d) %-6s %s\n",
-					color, resp.StatusCode, Reset,
-					p,
-					htmlSize,
-					lines,
-					elapsed.Truncate(time.Millisecond),
-					statusLabel,
-				)
 				mu.Lock()
 				resultados = append(resultados, Resultado{
+					Label: statusLabel,
 					Status: resp.StatusCode,
-					URL:    finalURL,
+					URL:    p,
 					Title:  title,
 					Size:   htmlSize,
 					Lines:  lines,
+					Time: tm,
+					Color: color,
 				})
 				mu.Unlock()
 			}
@@ -171,6 +170,6 @@ func Parser(endereco string, threads int, wordlist string, minDelay int, maxDela
 	bar.Clear()
 
 	end := time.Since(ini)
-	fmt.Printf("\n%s[✓]%s Scan completed in %s\n", Green, Reset, end.Truncate(time.Millisecond))
+	fmt.Printf("\n%s[✓]%s Scan completed in %s%s%s\n", Green, Reset, Blue, FormatDuration(end), Reset)
 	return resultados
 }
