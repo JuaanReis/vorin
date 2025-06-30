@@ -169,12 +169,12 @@ func main() {
 
 	resultado := dirbrute.Parser(*url, *threads, *wordlist, minDelay, maxDelay, *timeout, customHeader, valid)
 
-	fmt.Println("╔════════╦════════════════════════════╦══════════════╦══════════════╦════════╦══════════╗")
-	fmt.Println("║ CODE   ║ PATH                       ║ SIZE         ║ LINES        ║ TIME   ║ STATUS   ║")
-	fmt.Println("╠════════╬════════════════════════════╬══════════════╬══════════════╬════════╬══════════╣")
+	fmt.Println("╔════════╦════════════════════════════╦═══════════════╦══════════════╦════════╦══════════╗")
+	fmt.Println("║ CODE   ║ PATH                       ║ SIZE          ║ LINES        ║ TIME   ║ STATUS   ║")
+	fmt.Println("╠════════╬════════════════════════════╬═══════════════╬══════════════╬════════╬══════════╣")
 
 	for _, v := range resultado {
-		fmt.Printf("║ %s[%3d]%s  ║ %-26s ║ Size: %-6dB║ Lines: %-5d ║ %-6s ║ %-10s 	║\n",
+		fmt.Printf("║ %s[%3d]%s  ║ %-26s ║ Size: %-6dB ║ Lines: %-5d ║ %-6s ║ %-11s  	 ║\n",
 			v.Color, v.Status, dirbrute.Reset,
 			v.URL,
 			v.Size,
@@ -183,7 +183,7 @@ func main() {
 			v.Label,
 		)
 	}
-	fmt.Println("╚════════╩════════════════════════════╩══════════════╩══════════════╩════════╩══════════╝")
+	fmt.Println("╚════════╩════════════════════════════╩═══════════════╩══════════════╩════════╩══════════╝")
 	printLine("_", 100)
 
 	if len(resultado) == 0 {

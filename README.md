@@ -24,7 +24,7 @@ go build -o vorin
 ## Usage
 
 ```bash
-./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -d 1-3 -H "X-Debug: true" -H "Authorization: Bearer teste123" -timeout 5
+./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -d 1-3 -H "X-Debug: true" -H "Authorization: Bearer teste123" -timeout 5 -s 200,301,302
 ```
 
 ### Parameters
@@ -37,12 +37,13 @@ go build -o vorin
 | `-d`     | Timeout between requests                  |
 | `-H`     | Custom header                             |
 | `-timeout`| Connection timeout                       |
+| `-s`      | status codes to be considered valid      |
 
 ## Example
 
 Below is a real example of the tool running in a test environment, showing detection of hidden directories and sensitive files:
 
-![Scan Example](assets/screenshots/showing.png)
+![Scan Example](assets/screenshots/showing2.png)
 
 > All tests were performed in a safe and controlled environment, without affecting any real systems.
 
