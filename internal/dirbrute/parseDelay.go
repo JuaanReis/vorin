@@ -7,6 +7,11 @@ import (
 )
 
 func ParseDelay(input string) (int, int, error) {
+
+	if input == "0" {
+		return 0, 0, nil
+	}
+
 	if strings.Contains(input, "-") {
 		parts := strings.Split(input, "-")
 		if len(parts) != 2 {

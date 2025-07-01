@@ -1,4 +1,4 @@
-module vorin
+module github.com/JuaanReis/vorin
 
 go 1.22.3
 
