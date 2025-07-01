@@ -11,16 +11,32 @@
   - Live mode to make sure my tool actually works.
   - Use a proxy so your little friend doesn't find out about you (do you really need to hide so much from him?)
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [How it works](#how-it-works)
+- [Structure](#project-structure)
+- [Wordlist](#wordlist)
+- [Output](#output)
+- [Stealth Mode](#stealth-mode)
+- [Security](#security--responsibility)
+- [License](#license)
+- [Contributing](#contributing)
+- [Useful Links](#useful-links)
+
+> *The most used link is definitely the one on how to install*
+
 # Statistics and weird stuff
 
 [![Stars](https://img.shields.io/github/stars/JuaanReis/vorin?style=social)](https://github.com/JuaanReis/vorin) &nbsp;
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/JuaanReis/vorin/pulls) &nbsp;
 [![Last Commit](https://img.shields.io/github/last-commit/JuaanReis/vorin)](https://github.com/JuaanReis/vorin/commits/main) &nbsp;
-[![Go Version](https://img.shields.io/badge/Go-1.22.3+-00ADD8.svg)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/Go-1.22.3+-000000.svg)](https://golang.org/)
 [![License: GPL](https://img.shields.io/badge/License-GPL-blue.svg)](LICENSE) &nbsp;
-[![Play Random Video](https://img.shields.io/badge/VORIN-TV-red?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
-
-
+[![Play Random Video](https://img.shields.io/badge/VORIN-TV-darkred?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=dQw4w9WgXcQ) &nbsp;
+[![Play Random Video](https://img.shields.io/badge/VORIN-TV2-darkred?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=QwLvrnlfdNo)
 
 ## Features
 
@@ -58,6 +74,12 @@ curl -s https://raw.githubusercontent.com/JuaanReis/vorin/cmd/install.sh | bash
 *Vorin depends on Go version 1.22.3 or newer*<br>
 > *If you don't have go installed, download it here -> [Go](https://golang.org/dl/)*
 
+⚠️ *If you get any permission denied error on Linux, try:*
+
+```bash
+chmod +x vorin
+```
+
 ## Usage
 
 `This is a basic example of a scan`
@@ -65,6 +87,29 @@ curl -s https://raw.githubusercontent.com/JuaanReis/vorin/cmd/install.sh | bash
 ```bash
 ./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -d 1-3 -H "X-Debug: true" -H "Authorization: Bearer teste123" -timeout 5 -s 200,301,302 -proxy socks5://127.0.0.1:9050
 ```
+
+## How it works
+
+*Vorin uses Go's native concurrency to spawn multiple workers that:*
+- Replace the `Fuzz` keyword in the URL
+- Send HTTP GET requests
+- Analyze the response (status, size, title, etc.) and compare it to a random path (it really is random)
+- Display results with clean formatting (with optional silent or active mode) <br>
+> *I really tried to explain*
+
+## Project Structure
+
+```
+vorin/
+├── assets/ # Wordlists, banners, and screenshots
+├── cmd/ # CLI logic (shell for installation)
+├── config/ # (default customization files)
+├── internal/ # Core scanner logic (requests, handlers)
+├── pkg/ (files you definitely won't want to redo)
+├── main.go # Entry point
+└── README.md # You're here (I didn't even need to write this)
+```
+> *Making the structure was easier than making it*
 
 ### Parameters
 
@@ -88,11 +133,31 @@ curl -s https://raw.githubusercontent.com/JuaanReis/vorin/cmd/install.sh | bash
 
 Below is a real example of the tool running in a test environment, showing detection of hidden directories and sensitive files:
 
+> Below a proxy was also used (must be activated manually)
+
 ![Scan Example](assets/screenshots/showing3.png)
 
-> All tests were performed in a safe and controlled environment, without affecting any real systems.
+> Below is a scan with stealth mode (it is clearly slower)
 
->Please act responsibly — this tool is not a green light for illegal testing.
+![Stealth](assets/screenshots/showing4.png)
+
+
+Stealth mode comes with the following settings:
+```
+{
+  "threads": 40,
+  "delay": 3s-5s,
+  "timeout": 9s,
+  "statusCode", [200,301,302],
+  "header": "random",
+  "proxy": "needs to be activated manually"
+}
+```
+
+*When activating stealth mode all other settings except proxy and output modes will be ignored*
+
+> All tests were performed in a safe and controlled environment, without affecting any real systems.<br>
+> *Please act responsibly — this tool is not a green light for illegal testing.*
 
 ## Wordlist
 
@@ -109,6 +174,8 @@ phpinfo.php
 uploads
 includes
 ```
+
+> *I think it's better to get something ready-made than to make it. (I'm lazy)*
 
 ##  Output
 
@@ -136,17 +203,25 @@ You can save the scan results using the `-o` flag:
   }
 ]
 ```
+---
+You can use the -silent flag for no output other than the prints at the end, and it has a cool snake animation
 
+Example:
+```
+[Vorin] Running ⠼
+```
+*I would wear this to school*
+> I know it doesn't look good with code, use vorin just to see the animation (I recommend it)
 ## Security & Responsibility
 
-This tool is intended strictly for educational, ethical hacking, and professional security testing in authorized environments.
+This tool is intended strictly for educational purposes, ethical hacking and professional security testing in authorized environments.
 
-Use it responsibly.
-  Any misuse is entirely your responsibility.
-I (the author) am not liable for any damage, legal consequences, or problems caused by improper or unauthorized use of this tool. Know the law and play by the rules.
-## Security
+Please use it responsibly.
+Any misuse is your sole responsibility.
 
-This tool is intended for **educational and professional testing purposes only**. Unauthorized use against systems may be illegal and is your responsibility.
+I (the author) am not responsible for any damages, legal consequences or problems caused by improper or unauthorized use of this tool. Know the law and follow the rules.
+
+> *Especially since I don't have money to pay a lawyer.*
 
 ## License
 
