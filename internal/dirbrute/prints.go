@@ -43,7 +43,7 @@ func printInfo(title string, value string, width int) {
 func PrintHeader(url, wordlist, threads string, delay string, timeout string, header map[string]string, valid map[int]bool, stealth bool, proxy string, silence bool, bypass bool, extension string) {
 	if !silence {
 		fmt.Println()
-		PrintLine("_", 80, "Vorin v1.2.0")
+		PrintLine("_", 80, "Vorin v1.2.5")
 		PrintLine(" ", 80)
 		if stealth {
 			printInfo("\033[31mStealth\033[0m", "Activate", 19)
