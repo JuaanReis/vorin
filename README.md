@@ -85,7 +85,7 @@ chmod +x vorin
 `This is a basic example of a scan`
 
 ```bash
-./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -d 1-3 -H "X-Debug: true" -H "Authorization: Bearer teste123" -timeout 5 -s 200,301,302 -proxy socks5://127.0.0.1:9050
+./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -d 0.6-0.7 -H "X-Debug: true" -H "Authorization: Bearer teste123" -timeout 5 -s 200,301,302 -proxy socks5://127.0.0.1:9050 -ext php
 ```
 
 ## How it works
@@ -123,6 +123,8 @@ vorin/
 | `-H`       | Custom headers (repeatable)                                  | None                           | `-H "X-Test: true"`                          |
 | `-s`       | Valid status codes (comma-separated)                         | `200,301,302`                  | `-s 200,403`                                 |
 | `-proxy`   | Proxy URL (supports HTTP/SOCKS5)                             | None                           | `-proxy socks5://127.0.0.1:9050`             |
+| `-bypass`  |  Activates bypass techniques  | `false`     | `-bypass` |
+| `-ext`     |  Additional extensions, separated by commas (e.g. .php, .bak) | None      | `-ext php,bak,txt,tar.gz`  |
 | `-silence` | Hide progress/output until finished                          | `false`                        | `-silence`                                   |
 | `-live`    | Print results immediately when found                         | `false`                        | `-live`                                      |
 | `-stealth` | Enables stealth mode (random headers, delay, etc)           | `false`                        | `-stealth`                                   |

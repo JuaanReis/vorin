@@ -2,16 +2,16 @@ package dirbrute
 
 import (
 	"fmt"
+	"io"
+	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
-	"io"
+	"sync/atomic"
 	"time"
-	"os"
 	"github.com/JuaanReis/vorin/pkg"
 	"github.com/schollz/progressbar/v3"
-	"math/rand"
-	"compress/gzip"
 )
 
 type Resultado struct {
@@ -27,7 +27,9 @@ type Resultado struct {
 
 var spinnerDone = make(chan bool)
 
-func Parser(endereco string, threads int, wordlist string, minDelay int, maxDelay int, timeout int, customHeaders map[string]string, code map[int]bool, stealth bool, proxy string, silence bool, live bool) ([]Resultado, time.Duration) {
+var reqCounter int32
+
+func Parser(endereco string, threads int, wordlist string, minDelay float64, maxDelay float64, timeout int, customHeaders map[string]string, code map[int]bool, stealth bool, proxy string, silence bool, live bool, bypass bool, extension []string) ([]Resultado, time.Duration) {
 	var resultados []Resultado
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -35,17 +37,31 @@ func Parser(endereco string, threads int, wordlist string, minDelay int, maxDela
 
 	sem := make(chan struct{}, threads)
 
-	file, err := pkg.ReadLines(wordlist)
+	rawPaths, err := pkg.ReadLines(wordlist)
 	if err != nil {
 		fmt.Printf("[ERROR]: %v\n", err)
 		os.Exit(1)
 	}
+	var file []string
+	for _, path := range rawPaths {
+		file = append(file, path)
+		if strings.Contains(path, ".") {
+			continue
+		}
+
+		for _, ext := range extension {
+			if ext != "" {
+				file = append(file, path+ext)
+			}
+		}
+	}
+
 
 	client := &http.Client{
-    Timeout: time.Duration(timeout) * time.Second,
-    CheckRedirect: func(req *http.Request, via []*http.Request) error {
-        return http.ErrUseLastResponse
-    },
+		Timeout: time.Duration(timeout) * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 
 	CreateClientProxy(proxy, timeout)
@@ -70,7 +86,16 @@ func Parser(endereco string, threads int, wordlist string, minDelay int, maxDela
 	fakeStructureSize := len(structureOnly)
 	titleAle := strings.TrimSpace(strings.ToLower(getTitle(stringBodyAle)))
 
-	bar := progressbar.NewOptions(len(file),
+	totalPaths := 0
+	for _, path := range file {
+		if bypass {
+			totalPaths += len(ApplyBypassTechniques(path))
+		} else {
+			totalPaths++
+		}
+	}
+
+	bar := progressbar.NewOptions((totalPaths),
 		progressbar.OptionSetDescription("Testing paths..."),
 		progressbar.OptionShowCount(),
 		progressbar.OptionSetWidth(30),
@@ -83,112 +108,83 @@ func Parser(endereco string, threads int, wordlist string, minDelay int, maxDela
 		go Spinner("[Vorin] Running", spinnerDone)
 	}
 
-
 	for _, path := range file {
-		wg.Add(1)
-		sem <- struct{}{}
-
-		go func(p string) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			if !silence {
-				defer bar.Add(1)
-			}
-			if stealth || (minDelay > 0 && maxDelay > 0) {
-				delay := rand.Intn(maxDelay - minDelay + 1) + minDelay
-				time.Sleep(time.Duration(delay) * time.Second)
-			}
-
-			finalURL := strings.Replace(endereco, "Fuzz", p, -1)
-
-			start := time.Now()
-
-			req, err := http.NewRequest("GET", finalURL, nil)
-			if err != nil {
-				fmt.Printf("[ERROR]: %s", err)
-				return
-			}
-
-			if !stealth {
-				req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-				req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-				req.Header.Set("Accept-Language", "en-US,en;q=0.5")
-				req.Header.Set("Accept-Encoding", "gzip, deflate")
-				req.Header.Set("Connection", "keep-alive")
-				req.Header.Set("Upgrade-Insecure-Requests", "1")
-				req.Header.Set("Cache-Control", "max-age=0")
-				for key, val := range customHeaders {
-					req.Header.Set(key, val)
+		paths := []string{path}
+		if bypass {
+			paths = ApplyBypassTechniques(path)
+		}
+		for _, p := range paths {
+			wg.Add(1)
+			sem <- struct{}{}
+			go func(p string) {
+				defer wg.Done()
+				defer func() { <-sem }()
+				if !silence {
+					defer bar.Add(1)
 				}
-			}
 
-			if stealth {
-				HeadersC := GetRandomHeaders()
-				for key, value := range HeadersC {
-					req.Header.Set(key, value)
+				if stealth {
+					atomic.AddInt32(&reqCounter, 1)
+    			if atomic.LoadInt32(&reqCounter)%100 == 0 {
+        		time.Sleep(10 * time.Second)
+    			}
 				}
-			}
+				if stealth || (minDelay > 0 && maxDelay > 0) {
+					delayRange := maxDelay - minDelay
+					delay := minDelay + rand.Float64()*delayRange
+					time.Sleep(time.Duration(delay * float64(time.Second)))
+				}
 
-			resp, err := client.Do(req)
-			if err != nil {
-				return
-			}
-			defer resp.Body.Close()
 
-			if resp.Header.Get("Content-Encoding") == "gzip" {
-    		gzipReader, err := gzip.NewReader(resp.Body)
-    	if err != nil {
-        fmt.Printf("[ERROR]: gzip decode error: %v\n", err)
-        return
-    	}
-    	defer gzipReader.Close()
-    	reader = gzipReader
-			} else {
-    		reader = resp.Body
-			}
+				finalURL := strings.Replace(endereco, "Fuzz", p, -1)
+				start := time.Now()
 
-			body, err := io.ReadAll(reader)
-			if err != nil {
-				fmt.Printf("[ERROR] %s\n", err)
-				return
-			}
+				req, err := http.NewRequest("GET", finalURL, nil)
+				if err != nil {
+					return
+				}
 
-			lines, structureSize, title, htmlSize, content := DataTaget(body)
+				MountHeaders(req, p, stealth, bypass, customHeaders)
 
-			elapsed := time.Since(start)
+				body, resp, err := GetRequest(req, client, reader)
+				if err != nil {
+					return
+				}
 
-			isSameContent := title == titleAle || structureSize == fakeStructureSize
-			tm := elapsed.Truncate(time.Millisecond)
-			statusLabel, color := StatusColor(resp.StatusCode)
+				lines, structureSize, title, htmlSize, content := DataTaget(body)
 
-			if code[resp.StatusCode] &&
-				!content404(content) &&
-				!isSameContent  {
+				elapsed := time.Since(start)
+				isSameContent := title == titleAle || structureSize == fakeStructureSize
+				tm := elapsed.Truncate(time.Millisecond)
+				statusLabel, color := StatusColor(resp.StatusCode)
+
+				if code[resp.StatusCode] && !content404(content) && !isSameContent && lines > 0{
 					if live {
 						bar.Clear()
 						fmt.Printf("%s[%-3d]%s  /%-30s  Size: %-6dB  Lines: %-3d  %-6s  %s\n",
-						color, resp.StatusCode, Reset,
-						p,
-						htmlSize,
-						lines,
-						elapsed.Truncate(time.Millisecond),
-						statusLabel,
+							color, resp.StatusCode, Reset,
+							p,
+							htmlSize,
+							lines,
+							elapsed.Truncate(time.Millisecond),
+							statusLabel,
 						)
 					}
-				mu.Lock()
-				resultados = append(resultados, Resultado{
-					Label: statusLabel,
-					Status: resp.StatusCode,
-					URL:    p,
-					Title:  title,
-					Size:   htmlSize,
-					Lines:  lines,
-					Time: tm,
-					Color: color,
-				})
-				mu.Unlock()
-			}
-		}(path)
+					mu.Lock()
+					resultados = append(resultados, Resultado{
+						Label:  statusLabel,
+						Status: resp.StatusCode,
+						URL:    p,
+						Title:  title,
+						Size:   htmlSize,
+						Lines:  lines,
+						Time:   tm,
+						Color:  color,
+					})
+					mu.Unlock()
+				}
+			}(p)
+		}
 	}
 
 	wg.Wait()
@@ -198,6 +194,5 @@ func Parser(endereco string, threads int, wordlist string, minDelay int, maxDela
 
 	bar.Clear()
 	end := time.Since(ini)
-
 	return resultados, end
 }

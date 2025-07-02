@@ -10,7 +10,6 @@ func DataTaget(body []byte) (int, int, string, int, string){
 	structureSize := len(structureOnly)
 	htmlSize := len(body)
 	title := strings.TrimSpace(strings.ToLower(getTitle(stringBody)))
-	content := stringBody
-	lines := len(strings.Split(content, "\n"))
-	return structureSize, htmlSize, title, lines, content
+	lines := len(strings.Split(stringBody, "\n"))
+	return structureSize, htmlSize, title, lines, stringBody
 }

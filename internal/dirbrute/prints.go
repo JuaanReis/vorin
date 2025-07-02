@@ -40,7 +40,7 @@ func printInfo(title string, value string, width int) {
 	fmt.Printf(" $  %-*s : %s\n", width, title, value)
 }
 
-func PrintHeader(url, wordlist, threads string, delay string, timeout string, header map[string]string, valid map[int]bool, stealth bool, proxy string, silence bool) {
+func PrintHeader(url, wordlist, threads string, delay string, timeout string, header map[string]string, valid map[int]bool, stealth bool, proxy string, silence bool, bypass bool, extension string) {
 	if !silence {
 		fmt.Println()
 		PrintLine("_", 80, "Vorin v1.2.0")
@@ -49,6 +49,11 @@ func PrintHeader(url, wordlist, threads string, delay string, timeout string, he
 			printInfo("\033[31mStealth\033[0m", "Activate", 19)
 		} else {
 			printInfo("Stealth", "Disabled", 10)
+		}
+		if bypass {
+			printInfo("\033[31mBypass\033[0m", "Activate", 19)
+		} else {
+			printInfo("Bypass", "Disabled", 10)
 		}
 		printInfo("URL", url, 10)
 		printInfo("Wordlist", wordlist, 10)
@@ -70,20 +75,16 @@ func PrintHeader(url, wordlist, threads string, delay string, timeout string, he
 			statusStr = append(statusStr, strconv.Itoa(code))
 		}
 		printInfo("Code HTTP", strings.Join(statusStr, ", "), 10)
+		if extension != "" {
+			printInfo("Extensions", extension, 10)
+		}
 		if len(header) > 0 {
-			if stealth {
-				sel := []string{"User-Agent", "Accept", "Accept-Language"}
-				var preview []string
-				for _, k := range sel {
-					if v, ok := header[k]; ok {
-						preview = append(preview, fmt.Sprintf("%s: %s", k, v))
-					}
-				}
-				printInfo("Header", "(stealth) "+strings.Join(preview, " | "), 10)
-			} else {
-				headers := HeadersToString(header)
-				printInfo("Header", headers, 10)
-			}
+    	if stealth {
+        printInfo("Header", "(stealth) randomized headers per request", 10)
+    	} else {
+        headers := HeadersToString(header)
+        printInfo("Header", headers, 10)
+    	}
 		}
 		if proxy != "" {
 			printInfo("\033[31mProxy\033[0m", proxy, 19)

@@ -15,7 +15,7 @@ func main() {
 	url := flag.String("u", "", "Target URL")
 	threads := flag.Int("t", 50, "Number of concurrent threads")
 	wordlist := flag.String("w", "assets/wordlist/common.txt", "Path to wordlist")
-	delayFlag := flag.String("d", "0", "Delay entre requisições, ex: -d 1-5")
+	delayFlag := flag.String("d", "0.6-0.8", "Delay between requests, e.g. -d 1-5")
 	timeout := flag.Int("timeout", 5, "Request time")
 	flag.Var(&headers, "H", "Custom headers. Ex: -H 'Authorization: Bearer x' -H 'X-Test: true'")
 	flag.StringVar(&statusCodeFlags, "s", "200,301,302", "status codes to be considered valid (ex: -s 200,301,302)")
@@ -24,14 +24,14 @@ func main() {
 	silence := flag.Bool("silence", false, "Disables any UI")
 	live := flag.Bool("live", false, "print when finding a result (slower)")
 	outputFile := flag.String("o", "", "Output file path to save results as JSON")
+	bypass := flag.Bool("bypass", false, "Enable WAF bypass techniques")
+	extension := flag.String("ext", "", "Additional extensions, separated by commas (e.g. .php, .bak)")
 	flag.Parse()
 
 	if *url == "" {
 		fmt.Println("\033[31m[ERROR]\033[0m The -url flag cannot be empty")
 		os.Exit(1)
 	}
-
-
 
 	if !strings.Contains(*url, "Fuzz") {
 		fmt.Println("\033[31m[ERROR]\033[0m URL must contain 'Fuzz' placeholder")
@@ -45,8 +45,8 @@ func main() {
 
 	statusCodeFlags = strings.ReplaceAll(statusCodeFlags, " ", "")
 
-	minDelay := 0
-	maxDelay := 0
+	minDelay := float64(0)
+	maxDelay := float64(0)
 
 	minDelay, maxDelay, err := dirbrute.ParseDelay(*delayFlag)
 	if err != nil {
@@ -57,40 +57,56 @@ func main() {
 	customHeader := dirbrute.ParseHeaderFlags(headers)
 
 	if *stealth {
-		minDelay = 3
-		maxDelay = 5
-		*threads = 40
-		*timeout = 9
+		minDelay = 0.7
+		maxDelay = 0.9
+		*threads = 50
+		*timeout = 7
 		statusCodeFlags = "200,301,302"
 		customHeader = dirbrute.GetRandomHeaders()
 	}
 
+
+	if *bypass {
+		minDelay = 0.3
+		maxDelay = 0.7
+	}
+
 	valid := dirbrute.ParseStatusCodes(statusCodeFlags)
 
-	if *threads <= 0 || *threads >= 250 {
-		fmt.Println("[ERROR]: you can't put threads too high (> 250)")
+	if *threads >= 250 {
+		fmt.Println("[ERROR]: you can't put threads too high (> 250).")
+		os.Exit(1)
+	} else if *threads <= 0 {
+		fmt.Println("[ERROR]: If you don't want to use the tool, just log out.")
 		os.Exit(1)
 	}
 
 	delayStr := ""
 	if minDelay == maxDelay {
-		delayStr = fmt.Sprintf("%ds", minDelay)
+		delayStr = fmt.Sprintf("%.1fs", minDelay)
 	} else {
-		delayStr = fmt.Sprintf("%ds-%ds", minDelay, maxDelay)
+		delayStr = fmt.Sprintf("%.1fs-%.1fs", minDelay, maxDelay)
 	}
 
 	fmt.Print("\033[H\033[2J")
 
 
 	if *outputFile == "" {
-		dirbrute.PrintHeader(*url, *wordlist, strconv.Itoa(*threads), delayStr, fmt.Sprintf("%ds", *timeout), customHeader, valid, *stealth, *proxy, *silence)
+		dirbrute.PrintHeader(*url, *wordlist, strconv.Itoa(*threads), delayStr, fmt.Sprintf("%ds", *timeout), customHeader, valid, *stealth, *proxy, *silence, *bypass, *extension)
 	}
 
-	fmt.Println()
-	dirbrute.PrintLine("_", 80, "Results")
-	fmt.Println()
+	if !*silence {
+		fmt.Println()
+		dirbrute.PrintLine("_", 80, "Results")
+		fmt.Println()
+	}
 
-	resultado, temp := dirbrute.Parser(*url, *threads, *wordlist, minDelay, maxDelay, *timeout, customHeader, valid, *stealth, *proxy, *silence, *live)
+	var listExtension []string
+	if *extension != "" {
+		listExtension = strings.Split(*extension, ",")
+	}
+
+	resultado, temp := dirbrute.Parser(*url, *threads, *wordlist, minDelay, maxDelay, *timeout, customHeader, valid, *stealth, *proxy, *silence, *live, *bypass, listExtension)
 
 	resultadoJson := dirbrute.PrepareResultsForJSON(resultado)
 
@@ -116,9 +132,10 @@ func main() {
 		}
 	}
 
-	dirbrute.PrintLine("_", 80)
-
-	fmt.Printf("\n%s[✓]%s Scan completed in %s%s%s\n\n", dirbrute.Green, dirbrute.Reset, dirbrute.Blue, dirbrute.FormatDuration(temp), dirbrute.Reset)
+	if !*silence {
+		dirbrute.PrintLine("_", 80)
+		fmt.Printf("\n%s[✓]%s Scan completed in %s%s%s\n\n", dirbrute.Green, dirbrute.Reset, dirbrute.Blue, dirbrute.FormatDuration(temp), dirbrute.Reset)
+	}
 
 	if len(resultado) == 0 {
 		fmt.Println(dirbrute.Red + "\n[!!] No path found" + dirbrute.Reset)

@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"strings"
 	"fmt"
+	"net/http"
 )
 
 type HeaderFlags []string
@@ -98,4 +99,28 @@ func HeadersToString(headers map[string]string) string {
 	}
 	str := sb.String()
 	return strings.TrimSuffix(str, ", ")
+}
+
+func MountHeaders(req *http.Request, path string, stealth, bypass bool, custom map[string]string) {
+	headers := map[string]string{}
+
+	if stealth {
+		for k, v := range GetRandomHeaders() {
+			headers[k] = v
+		}
+	}
+
+	if bypass {
+		for k, v := range BuildBypassHeaders(path) {
+			headers[k] = v
+		}
+	}
+
+	for k, v := range custom {
+		headers[k] = v
+	}
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 }

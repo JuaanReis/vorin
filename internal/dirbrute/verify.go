@@ -42,7 +42,6 @@ func content404(html string) bool {
 		"pagina nao encontrada", "pagina inexistente", "nao existe", "conteudo nao encontrado",
 		"sem resultados", "endereco invalido", "erro 404", "pagina removida",
 	}
-
 	cleaned := cleanHTML(html)
 
 	for _, keyword := range errKeywords {
