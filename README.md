@@ -122,7 +122,7 @@ vorin/
 | `-timeout` | Connection timeout                                           | `5s`                           | `-timeout 10`                                |
 | `-rate`    |  Maximum number of requests per second (RPS). Set 0 to disable rate limiting | `20r/s`        |  `-rate 45`   |
 | `-H`       | Custom headers (repeatable)                                  | None                           | `-H "X-Test: true"`                          |
-|  `-random-agent` | uses a random user agent per request  | false    |   `-random-agent`  |
+|  `-random-agent` | uses a random user agent per request  | `false`    |   `-random-agent`  |
 | `-s`       | Valid status codes (comma-separated)                         | `200,301,302,401,403`                  | `-s 200,403`                                 |
 | `-proxy`   | Proxy URL (supports HTTP/SOCKS5)                             | None                           | `-proxy socks5://127.0.0.1:9050`             |
 | `-bypass`  |  Activates bypass techniques  | `false`     | `-bypass` |
