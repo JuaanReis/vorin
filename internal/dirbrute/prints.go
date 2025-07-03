@@ -40,10 +40,10 @@ func printInfo(title string, value string, width int) {
 	fmt.Printf(" $  %-*s : %s\n", width, title, value)
 }
 
-func PrintHeader(url, wordlist, threads string, delay string, timeout string, header map[string]string, valid map[int]bool, stealth bool, proxy string, silence bool, bypass bool, extension string) {
+func PrintHeader(url, wordlist, threads string, delay string, timeout string, header map[string]string, valid map[int]bool, stealth bool, proxy string, silence bool, bypass bool, extension string, rate string) {
 	if !silence {
 		fmt.Println()
-		PrintLine("_", 80, "Vorin v1.2.5")
+		PrintLine("_", 80, "Vorin v1.2.9")
 		PrintLine(" ", 80)
 		if stealth {
 			printInfo("\033[31mStealth\033[0m", "Activate", 19)
@@ -57,6 +57,9 @@ func PrintHeader(url, wordlist, threads string, delay string, timeout string, he
 		}
 		printInfo("URL", url, 10)
 		printInfo("Wordlist", wordlist, 10)
+		if rate != "" {
+			printInfo("Rate", rate, 10)
+		}
 		printInfo("Threads", threads, 10)
 		if delay == "0" {
 			printInfo("Delay", "Disable", 10)
@@ -94,4 +97,8 @@ func PrintHeader(url, wordlist, threads string, delay string, timeout string, he
 		PrintLine("_", 80)
 		fmt.Println()
 	}
+}
+
+func PrintError(msg string) {
+	fmt.Printf("\033[31m[ERROR]\033[0m %s\n", msg)
 }

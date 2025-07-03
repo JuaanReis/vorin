@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 	"github.com/JuaanReis/vorin/pkg"
 	"github.com/schollz/progressbar/v3"
@@ -27,13 +26,27 @@ type Resultado struct {
 
 var spinnerDone = make(chan bool)
 
-var reqCounter int32
-
-func Parser(endereco string, threads int, wordlist string, minDelay float64, maxDelay float64, timeout int, customHeaders map[string]string, code map[int]bool, stealth bool, proxy string, silence bool, live bool, bypass bool, extension []string) ([]Resultado, time.Duration) {
+func Parser(endereco string, threads int, wordlist string, minDelay float64, maxDelay float64, timeout int, customHeaders map[string]string, code map[int]bool, stealth bool, proxy string, silence bool, live bool, bypass bool, extension []string, rateLimit int, filterSize int, filterLine int, filterTitle string, randomAgent bool, shuffle bool) ([]Resultado, time.Duration) {
 	var resultados []Resultado
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var reader io.Reader
+	var rateLimiter <-chan time.Time
+	var resultadoUnico = make(map[string]bool)
+	progressChan := make(chan struct{})
+
+	userAgents := []string{
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36",
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/15.1 Safari/605.1.15",
+		"Mozilla/5.0 (X11; Linux x86_64) Gecko/20100101 Firefox/113.0",
+		"Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148",
+		"Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 Chrome/91.0.4472.120 Mobile Safari/537.36",
+		"Googlebot/2.1 (+http://www.google.com/bot.html)",
+	}
+
+	if rateLimit > 0 {
+		rateLimiter = time.Tick(time.Second / time.Duration(rateLimit))
+	}
 
 	sem := make(chan struct{}, threads)
 
@@ -42,6 +55,7 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 		fmt.Printf("[ERROR]: %v\n", err)
 		os.Exit(1)
 	}
+
 	var file []string
 	for _, path := range rawPaths {
 		file = append(file, path)
@@ -56,6 +70,12 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 		}
 	}
 
+	if shuffle {
+		rand.Seed(time.Now().UnixNano())
+			rand.Shuffle(len(file), func(i, j int) {
+			file[i], file[j] = file[j], file[i]
+		})
+	}
 
 	client := &http.Client{
 		Timeout: time.Duration(timeout) * time.Second,
@@ -108,6 +128,12 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 		go Spinner("[Vorin] Running", spinnerDone)
 	}
 
+	go func() {
+		for range progressChan {
+			bar.Add(1)
+		}
+	}()
+
 	for _, path := range file {
 		paths := []string{path}
 		if bypass {
@@ -120,21 +146,19 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 				defer wg.Done()
 				defer func() { <-sem }()
 				if !silence {
-					defer bar.Add(1)
+					progressChan <- struct{}{}
 				}
 
-				if stealth {
-					atomic.AddInt32(&reqCounter, 1)
-    			if atomic.LoadInt32(&reqCounter)%100 == 0 {
-        		time.Sleep(10 * time.Second)
-    			}
+				if rateLimiter != nil {
+					<-rateLimiter
 				}
+
 				if stealth || (minDelay > 0 && maxDelay > 0) {
 					delayRange := maxDelay - minDelay
 					delay := minDelay + rand.Float64()*delayRange
-					time.Sleep(time.Duration(delay * float64(time.Second)))
+					jitter := rand.Float64() * 0.1
+					time.Sleep(time.Duration((delay + jitter) * float64(time.Second)))
 				}
-
 
 				finalURL := strings.Replace(endereco, "Fuzz", p, -1)
 				start := time.Now()
@@ -146,6 +170,11 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 
 				MountHeaders(req, p, stealth, bypass, customHeaders)
 
+				if randomAgent && !stealth && !bypass {
+					random := rand.Intn(len(userAgents))
+					req.Header.Set("User-Agent", userAgents[random])
+				}
+
 				body, resp, err := GetRequest(req, client, reader)
 				if err != nil {
 					return
@@ -154,40 +183,54 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 				lines, structureSize, title, htmlSize, content := DataTaget(body)
 
 				elapsed := time.Since(start)
-				isSameContent := title == titleAle || structureSize == fakeStructureSize
+
+				titleMatch := title == titleAle || title == filterTitle
+				sizeTooSmall := htmlSize <= filterSize
+				linesTooFew := lines <= filterLine
+				structureMatch := structureSize == fakeStructureSize
+
+				isSameContent := titleMatch || structureMatch || sizeTooSmall || linesTooFew
+
 				tm := elapsed.Truncate(time.Millisecond)
 				statusLabel, color := StatusColor(resp.StatusCode)
 
-				if code[resp.StatusCode] && !content404(content) && !isSameContent && lines > 0{
-					if live {
-						bar.Clear()
-						fmt.Printf("%s[%-3d]%s  /%-30s  Size: %-6dB  Lines: %-3d  %-6s  %s\n",
-							color, resp.StatusCode, Reset,
-							p,
-							htmlSize,
-							lines,
-							elapsed.Truncate(time.Millisecond),
-							statusLabel,
-						)
+				key := strings.ToLower(p)
+
+				if code[resp.StatusCode] && !content404(content) && !isSameContent && lines > 0 {
+					if !resultadoUnico[key] {
+						resultadoUnico[key] = true
+						if live {
+							bar.Clear()
+							fmt.Printf("%s[%3d]%s  %-26s Size: %-6dB Lines: %-5d %-6s %-11s\n",
+								color, resp.StatusCode, Reset,
+								p,
+								htmlSize,
+								lines,
+								elapsed.Truncate(time.Millisecond),
+								statusLabel,
+							)
+						}
+						mu.Lock()
+						resultados = append(resultados, Resultado{
+							Label:  statusLabel,
+							Status: resp.StatusCode,
+							URL:    p,
+							Title:  title,
+							Size:   htmlSize,
+							Lines:  lines,
+							Time:   tm,
+							Color:  color,
+						})
+						mu.Unlock()
 					}
-					mu.Lock()
-					resultados = append(resultados, Resultado{
-						Label:  statusLabel,
-						Status: resp.StatusCode,
-						URL:    p,
-						Title:  title,
-						Size:   htmlSize,
-						Lines:  lines,
-						Time:   tm,
-						Color:  color,
-					})
-					mu.Unlock()
+
 				}
 			}(p)
 		}
 	}
 
 	wg.Wait()
+	close(progressChan)
 	if silence {
 		spinnerDone <- true
 	}

@@ -11,16 +11,47 @@ const (
 )
 
 func StatusColor(code int) (string, string) {
-	switch {
-	case code >= 200 && code < 300:
+	switch code {
+	case 200:
 		return fmt.Sprintf("%s[OK]%s", Green, Reset), Green
-	case code >= 300 && code < 400:
+	case 201:
+		return fmt.Sprintf("%s[CREATED]%s", Green, Reset), Green
+	case 204:
+		return fmt.Sprintf("%s[NO CONTENT]%s", Green, Reset), Green
+	case 301, 302, 307, 308:
 		return fmt.Sprintf("%s[REDIRECT]%s", Blue, Reset), Blue
-	case code >= 400 && code < 500:
+	case 400:
+		return fmt.Sprintf("%s[BAD REQUEST]%s", Red, Reset), Red
+	case 401:
+		return fmt.Sprintf("%s[UNAUTHORIZED]%s", Yellow, Reset), Yellow
+	case 403:
+		return fmt.Sprintf("%s[FORBIDDEN]%s", Yellow, Reset), Yellow
+	case 404:
 		return fmt.Sprintf("%s[NOT FOUND]%s", Red, Reset), Red
-	case code >= 500:
+	case 405:
+		return fmt.Sprintf("%s[NOT ALLOWED]%s", Yellow, Reset), Yellow
+	case 429:
+		return fmt.Sprintf("%s[TOO MANY]%s", Yellow, Reset), Yellow
+	case 500:
 		return fmt.Sprintf("%s[SERVER ERROR]%s", Red, Reset), Red
+	case 502:
+		return fmt.Sprintf("%s[BAD GATEWAY]%s", Red, Reset), Red
+	case 503:
+		return fmt.Sprintf("%s[SERVICE UNAVAIL]%s", Red, Reset), Red
+	case 504:
+		return fmt.Sprintf("%s[TIMEOUT]%s", Red, Reset), Red
 	default:
-		return fmt.Sprintf("%s[UNKNOWN]%s", Red, Reset), Red
+		switch {
+		case code >= 200 && code < 300:
+			return fmt.Sprintf("%s[2xx]%s", Green, Reset), Green
+		case code >= 300 && code < 400:
+			return fmt.Sprintf("%s[3xx]%s", Blue, Reset), Blue
+		case code >= 400 && code < 500:
+			return fmt.Sprintf("%s[4xx]%s", Yellow, Reset), Yellow
+		case code >= 500:
+			return fmt.Sprintf("%s[5xx]%s", Red, Reset), Red
+		default:
+			return fmt.Sprintf("%s[UNKNOWN]%s", Red, Reset), Red
+		}
 	}
 }

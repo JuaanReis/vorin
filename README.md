@@ -6,10 +6,10 @@
 **Vorin** is a web directory and admin path scanner tool written in Go. It's built for speed, simplicity, and clean output. Inspired by tools like Gobuster and FFUF, but with its own unique style.
 
   - Search and find hidden directories.
-  - Use stealth mode to attack your friend's project without being discovered.
+  - Use stealth mode for silent reconnaissance... but don't do it on your little friend's project.
   - UIless mode for those in a hurry using silence.
   - Live mode to make sure my tool actually works.
-  - Use a proxy so your little friend doesn't find out about you (do you really need to hide so much from him?)
+  - Use a proxy so your little friend doesn't find out about your tests (do you really need to hide so much from him?)
 
 ## Table of Contents
 
@@ -35,7 +35,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/JuaanReis/vorin)](https://github.com/JuaanReis/vorin/commits/main) &nbsp;
 [![Go Version](https://img.shields.io/badge/Go-1.22.3+-000000.svg)](https://golang.org/)
 [![License: GPL](https://img.shields.io/badge/License-GPL-blue.svg)](LICENSE) &nbsp;
-[![Play Random Video](https://img.shields.io/badge/VORIN-TV-darkred?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=dQw4w9WgXcQ) &nbsp;
+[![Play Random Video](https://img.shields.io/badge/VORIN-TV1-darkred?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=dQw4w9WgXcQ) &nbsp;
 [![Play Random Video](https://img.shields.io/badge/VORIN-TV2-darkred?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=QwLvrnlfdNo)
 
 ## Features
@@ -85,7 +85,7 @@ chmod +x vorin
 `This is a basic example of a scan`
 
 ```bash
-./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -d 0.6-0.7 -H "X-Debug: true" -H "Authorization: Bearer teste123" -timeout 5 -s 200,301,302 -proxy socks5://127.0.0.1:9050 -ext php
+./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -rate 35 -d 0.6-0.7 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -s 200,301,302,403 -proxy socks5://127.0.0.1:9050 -ext php
 ```
 
 ## How it works
@@ -102,14 +102,14 @@ chmod +x vorin
 ```
 vorin/
 ├── assets/ # Wordlists, banners, and screenshots
-├── cmd/ # CLI logic (shell for installation)
+├── cmd/ # bash codes (shell for installation)
 ├── config/ # (default customization files)
 ├── internal/ # Core scanner logic (requests, handlers)
 ├── pkg/ (files you definitely won't want to redo)
 ├── main.go # Entry point
 └── README.md # You're here (I didn't even need to write this)
 ```
-> *Making the structure was easier than making it*
+> *Making the structure was easier than writing it*
 
 ### Parameters
 
@@ -117,11 +117,13 @@ vorin/
 |------------|--------------------------------------------------------------|--------------------------------|----------------------------------------------|
 | `-u`       | Target URL (must contain `Fuzz`)                             | ""                             | `-u https://site.com/Fuzz`                   |
 | `-w`       | Path to wordlist                                             | `assets/wordlist/common.txt`   | `-w mylist.txt`                              |
-| `-t`       | Number of concurrent threads                                 | 50                             | `-t 100`                                     |
-| `-d`       | Random delay between requests (e.g. 1-5)                     | `0s`                           | `-d 1-3`                                     |
+| `-t`       | Number of concurrent threads                                 | `50`                             | `-t 100`                                     |
+| `-d`       | Random delay between requests (e.g. 1-5)                     | `0.1s-0.2s`                           | `-d 1-3`                                     |
 | `-timeout` | Connection timeout                                           | `5s`                           | `-timeout 10`                                |
+| `-rate`    |  Maximum number of requests per second (RPS). Set 0 to disable rate limiting | `20r/s`        |  `-rate 45`   |
 | `-H`       | Custom headers (repeatable)                                  | None                           | `-H "X-Test: true"`                          |
-| `-s`       | Valid status codes (comma-separated)                         | `200,301,302`                  | `-s 200,403`                                 |
+|  `-random-agent` | uses a random user agent per request  | false    |   `-random-agent`  |
+| `-s`       | Valid status codes (comma-separated)                         | `200,301,302,401,403`                  | `-s 200,403`                                 |
 | `-proxy`   | Proxy URL (supports HTTP/SOCKS5)                             | None                           | `-proxy socks5://127.0.0.1:9050`             |
 | `-bypass`  |  Activates bypass techniques  | `false`     | `-bypass` |
 | `-ext`     |  Additional extensions, separated by commas (e.g. .php, .bak) | None      | `-ext php,bak,txt,tar.gz`  |
@@ -129,34 +131,59 @@ vorin/
 | `-live`    | Print results immediately when found                         | `false`                        | `-live`                                      |
 | `-stealth` | Enables stealth mode (random headers, delay, etc)           | `false`                        | `-stealth`                                   |
 | `-o`       | Path to save results as JSON                                 | None                           | `-o results.json`                            |
+| `-filter-size`  | filter pages by size | 0      |  `-filter-size  2`  |
+| `-filter-line` | filters pages by number of lines |  0 |   `-filter-line 1`  |
+|  `-filter-title` | filters page by title  | ""  | `-filter-title "404 Not Found"` |
+| `-shuffle`  | shuffle the wordlist  | `false`    |  `-shuffle`    |
 
 
-## Example
+## Examples
 
 Below is a real example of the tool running in a test environment, showing detection of hidden directories and sensitive files:
 
 > Below a proxy was also used (must be activated manually)
 
-![Scan Example](assets/screenshots/showing3.png)
+![Scan Example](assets/screenshots/showing5.png)
 
-> Below is a scan with stealth mode (it is clearly slower)
+> Below is a scan with stealth mode
 
-![Stealth](assets/screenshots/showing4.png)
+![Stealth](assets/screenshots/showing5stealth.png)
 
 
 Stealth mode comes with the following settings:
 ```
 {
-  "threads": 40,
-  "delay": 3s-5s,
-  "timeout": 9s,
-  "statusCode", [200,301,302],
+  "threads": 30,
+  "rate": 15r/s,
+  "delay": 0.2s-0.2s,
+  "timeout": 7s,
   "header": "random",
   "proxy": "needs to be activated manually"
 }
 ```
 
-*When activating stealth mode all other settings except proxy and output modes will be ignored*
+> Below is a scan with bypass (it is clearly slower)
+
+![Bypass](assets/screenshots/showing5Bypass.png)
+
+*Not all the results of this scan appeared because many paths were discovered*
+
+The bypass configuration is as follows:
+```
+{
+  "threads": 30,
+  "rate": 15r/s,
+  "delay": 0.2s-0.3s,
+  "header" random but different from stealth mode,
+  "proxy" still has to be activated manually (how many times will I have to repeat this?),
+}
+```
+
+> Below is a picture of a scan with all other modes active, it was not finished due to laziness. (*time marked by the red line*)
+
+![Monster](assets/screenshots/showing5All.png)
+
+*I really thought it would take longer, if you can do this test, put the total time here in the readme*
 
 > All tests were performed in a safe and controlled environment, without affecting any real systems.<br>
 > *Please act responsibly — this tool is not a green light for illegal testing.*
