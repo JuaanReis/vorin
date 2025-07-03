@@ -131,10 +131,10 @@ vorin/
 | `-live`    | Print results immediately when found                         | `false`                        | `-live`                                      |
 | `-stealth` | Enables stealth mode (random headers, delay, etc)           | `false`                        | `-stealth`                                   |
 | `-o`       | Path to save results as JSON                                 | None                           | `-o results.json`                            |
-| `-filter-size`  | filter pages by size | 0      |  `-filter-size  2`  |
-| `-filter-line` | filters pages by number of lines |  0 |   `-filter-line 1`  |
-|  `-filter-title` | filters page by title  | ""  | `-filter-title "404 Not Found"` |
-| `-shuffle`  | shuffle the wordlist  | `false`    |  `-shuffle`    |
+| `-filter-size`  | Filter pages by size | 0      |  `-filter-size  2`  |
+| `-filter-line` | Filters pages by number of lines |  0 |   `-filter-line 1`  |
+|  `-filter-title` | Filters page by title  | ""  | `-filter-title "404 Not Found"` |
+| `-shuffle`  | Fhuffle the wordlist  | `false`    |  `-shuffle`    |
 
 
 ## Examples
@@ -233,7 +233,7 @@ You can save the scan results using the `-o` flag:
 ]
 ```
 ---
-You can use the -silent flag for no output other than the prints at the end, and it has a cool snake animation
+You can use the -silence flag for no output other than the prints at the end, and it has a cool snake animation
 
 Example:
 ```
