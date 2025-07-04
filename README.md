@@ -20,7 +20,6 @@
 - [Structure](#project-structure)
 - [Wordlist](#wordlist)
 - [Output](#output)
-- [Stealth Mode](#stealth-mode)
 - [Security](#security--responsibility)
 - [License](#license)
 - [Contributing](#contributing)
