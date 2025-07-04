@@ -11,6 +11,7 @@ import (
 	"time"
 	"github.com/JuaanReis/vorin/pkg"
 	"github.com/schollz/progressbar/v3"
+	"regexp"
 )
 
 type Resultado struct {
@@ -26,7 +27,7 @@ type Resultado struct {
 
 var spinnerDone = make(chan bool)
 
-func Parser(endereco string, threads int, wordlist string, minDelay float64, maxDelay float64, timeout int, customHeaders map[string]string, code map[int]bool, stealth bool, proxy string, silence bool, live bool, bypass bool, extension []string, rateLimit int, filterSize int, filterLine int, filterTitle string, randomAgent bool, shuffle bool) ([]Resultado, time.Duration) {
+func Parser(endereco string, threads int, wordlist string, minDelay float64, maxDelay float64, timeout int, customHeaders map[string]string, code map[int]bool, stealth bool, proxy string, silence bool, live bool, bypass bool, extension []string, rateLimit int, filterSize int, filterLine int, filterTitle string, randomAgent bool, shuffle bool, filterTitleContent string, filterBodyContent string, filterBody string, regexBody string, regexTitle string, redirect bool, statusOnly bool, retries int, compare string, randomIp bool) ([]Resultado, time.Duration) {
 	var resultados []Resultado
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -34,6 +35,8 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 	var rateLimiter <-chan time.Time
 	var resultadoUnico = make(map[string]bool)
 	progressChan := make(chan struct{})
+	var compiledRegexTitle *regexp.Regexp
+	var compiledRegexBody *regexp.Regexp
 
 	userAgents := []string{
 		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36",
@@ -79,14 +82,22 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 
 	client := &http.Client{
 		Timeout: time.Duration(timeout) * time.Second,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+	}
+
+	if !redirect {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
-		},
+		}
 	}
 
 	CreateClientProxy(proxy, timeout)
 
-	fakePath := "__vorin_this_should_not_exist_473827382__"
+	var fakePath string
+	if compare != "" {
+		fakePath = compare
+	} else {
+		fakePath = "__vorin_this_should_not_exist_473827382__"
+	}
 	enderecoBase := strings.Replace(endereco, "Fuzz", "", -1)
 	pathAle := strings.TrimRight(enderecoBase, "/") + "/" + fakePath
 	respAle, err := http.Get(pathAle)
@@ -134,6 +145,25 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 		}
 	}()
 
+
+	if regexTitle != "" {
+		var err error
+		compiledRegexTitle, err = regexp.Compile("(?i)" + regexTitle)
+		if err != nil {
+			fmt.Printf("[ERROR regex-title]: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	if regexBody != "" {
+		var err error
+		compiledRegexBody, err = regexp.Compile("(?i)" + regexBody)
+		if err != nil {
+			fmt.Printf("[ERROR regex-body]: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	for _, path := range file {
 		paths := []string{path}
 		if bypass {
@@ -170,13 +200,20 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 
 				MountHeaders(req, p, stealth, bypass, customHeaders)
 
+				if randomIp && (!bypass || !stealth) {
+    			ip := RandomIP()
+    			req.Header.Set("X-Client-IP", ip)
+    			req.Header.Set("X-Forwarded-For", ip)
+    			req.Header.Set("CF-Connecting-IP", ip)
+				}
+
 				if randomAgent && !stealth && !bypass {
 					random := rand.Intn(len(userAgents))
 					req.Header.Set("User-Agent", userAgents[random])
 				}
 
-				body, resp, err := GetRequest(req, client, reader)
-				if err != nil {
+				body, resp, err := GetRequestWithRetry(req, client, reader, retries)
+				if err != nil || resp == nil {
 					return
 				}
 
@@ -184,31 +221,60 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 
 				elapsed := time.Since(start)
 
+				mustMatch := true
+				if filterBodyContent != "" && !strings.Contains(strings.ToLower(content), strings.ToLower(filterBodyContent)) {
+					mustMatch = false
+				}
+
+				if filterTitleContent != "" && !strings.Contains(strings.ToLower(title), strings.ToLower(filterTitleContent)) {
+					mustMatch = false
+				}
+
 				titleMatch := title == titleAle || title == filterTitle
 				sizeTooSmall := htmlSize <= filterSize
-				linesTooFew := lines <= filterLine
+				linesTooFew := lines <= filterLine || lines == 0
 				structureMatch := structureSize == fakeStructureSize
+				erroBody := false
+				if filterBody != "" {
+					erroBody = strings.Contains(strings.ToLower(content), strings.ToLower(filterBody))
+				}
+				isSameContent := titleMatch || structureMatch || sizeTooSmall || linesTooFew || erroBody
 
-				isSameContent := titleMatch || structureMatch || sizeTooSmall || linesTooFew
+				matchRegexTitle := true
+				matchRegexBody := true
+
+				if compiledRegexTitle != nil && !compiledRegexTitle.MatchString(title) {
+					matchRegexTitle = false
+				}
+
+				if compiledRegexBody != nil && !compiledRegexBody.MatchString(content) {
+					matchRegexBody = false
+				}
 
 				tm := elapsed.Truncate(time.Millisecond)
 				statusLabel, color := StatusColor(resp.StatusCode)
 
 				key := strings.ToLower(p)
 
-				if code[resp.StatusCode] && !content404(content) && !isSameContent && lines > 0 {
+				if code[resp.StatusCode] && !content404(content) && !isSameContent && lines > 0 && mustMatch && matchRegexTitle && matchRegexBody {
 					if !resultadoUnico[key] {
 						resultadoUnico[key] = true
 						if live {
 							bar.Clear()
-							fmt.Printf("%s[%3d]%s  %-26s Size: %-6dB Lines: %-5d %-6s %-11s\n",
-								color, resp.StatusCode, Reset,
-								p,
-								htmlSize,
-								lines,
-								elapsed.Truncate(time.Millisecond),
-								statusLabel,
-							)
+							if statusOnly {
+								fmt.Printf("%s[%3d]%s %-26s\n",
+									color, resp.StatusCode, Reset, p,
+								)
+							} else {
+								fmt.Printf("%s[%3d]%s  %-26s Size: %-6dB Lines: %-5d %-6s %-11s\n",
+									color, resp.StatusCode, Reset,
+									p,
+									htmlSize,
+									lines,
+									elapsed.Truncate(time.Millisecond),
+									statusLabel,
+								)
+							}
 						}
 						mu.Lock()
 						resultados = append(resultados, Resultado{

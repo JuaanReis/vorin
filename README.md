@@ -115,27 +115,33 @@ vorin/
 
 | Flag       | Description                                                  | Default                        | Example                                      |
 |------------|--------------------------------------------------------------|--------------------------------|----------------------------------------------|
-| `-u`       | Target URL (must contain `Fuzz`)                             | ""                             | `-u https://site.com/Fuzz`                   |
+| `-u`       | Target URL (must contain `Fuzz`)                             | *None*                             | `-u https://site.com/Fuzz`                   |
 | `-w`       | Path to wordlist                                             | `assets/wordlist/common.txt`   | `-w mylist.txt`                              |
 | `-t`       | Number of concurrent threads                                 | `50`                             | `-t 100`                                     |
 | `-d`       | Random delay between requests (e.g. 1-5)                     | `0.1s-0.2s`                           | `-d 1-3`                                     |
 | `-timeout` | Connection timeout                                           | `5s`                           | `-timeout 10`                                |
 | `-rate`    |  Maximum number of requests per second (RPS). Set 0 to disable rate limiting | `20r/s`        |  `-rate 45`   |
-| `-H`       | Custom headers (repeatable)                                  | None                           | `-H "X-Test: true"`                          |
+| `-H`       | Custom headers (repeatable)                                  | *None*                           | `-H "X-Test: true"`                          |
 |  `-random-agent` | uses a random user agent per request  | `false`    |   `-random-agent`  |
+|  `-random-ip` | uses a random IP per request | `false` | `-random-ip` |
 | `-s`       | Valid status codes (comma-separated)                         | `200,301,302,401,403`                  | `-s 200,403`                                 |
-| `-proxy`   | Proxy URL (supports HTTP/SOCKS5)                             | None                           | `-proxy socks5://127.0.0.1:9050`             |
+| `-proxy`   | Proxy URL (supports HTTP/SOCKS5)                             | *None*                           | `-proxy socks5://127.0.0.1:9050`             |
+| `-redirect` |  follow 3xx status code redirects | `false`  | `-redirect`  |
 | `-bypass`  |  Activates bypass techniques  | `false`     | `-bypass` |
-| `-ext`     |  Additional extensions, separated by commas (e.g. .php, .bak) | None      | `-ext php,bak,txt,tar.gz`  |
+| `-ext`     |  Additional extensions, separated by commas (e.g. .php, .bak) | *None*      | `-ext php,bak,txt,tar.gz`  |
 | `-silence` | Hide progress/output until finished                          | `false`                        | `-silence`                                   |
 | `-live`    | Print results immediately when found                         | `false`                        | `-live`                                      |
+| `-status-only` | The output only returns the status code and the path |  `false`  | `-status-only` |
 | `-stealth` | Enables stealth mode (random headers, delay, etc)           | `false`                        | `-stealth`                                   |
-| `-o`       | Path to save results as JSON                                 | None                           | `-o results.json`                            |
-| `-filter-size`  | Filter pages by size | 0      |  `-filter-size  2`  |
-| `-filter-line` | Filters pages by number of lines |  0 |   `-filter-line 1`  |
-|  `-filter-title` | Filters page by title  | ""  | `-filter-title "404 Not Found"` |
+| `-save-json`       | Path to save results as JSON                                 | *None*                           | `-save-json results.json`                            |
+| `-filter-size`  | Filter pages by size | `0`      |  `-filter-size  2`  |
+| `-filter-line` | Filters pages by number of lines |  `0` |   `-filter-line 1`  |
+|  `-filter-title` | Filters page by title  | *None*  | `-filter-title "404 Not Found"` |
+| `-filter-body`  | Filter page by words  |  *None*     | `-filter-body "admin"`  |
 | `-shuffle`  | Fhuffle the wordlist  | `false`    |  `-shuffle`    |
-
+| `-regex-body` | Apply regex to the body | *None*  | `-regex-body "dashboard"` |
+| `-regex-title` | Apply regex to the title | *None* | `-regex-title "admin"`  |
+| `-compare` | Path to be compared to wordlist | `Default in the code` | `-compare "a1b2c3d4"` |
 
 ## Examples
 
@@ -208,10 +214,10 @@ includes
 
 ##  Output
 
-You can save the scan results using the `-o` flag:
+You can save the scan results using the `-save-json` flag:
 
 ```bash
-./vorin -u http://example.com/Fuzz -o results.json
+./vorin -u http://example.com/Fuzz -save-json results.json
 ```
 *The path must be passed to the flag*
 

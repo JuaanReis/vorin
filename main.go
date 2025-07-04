@@ -23,15 +23,25 @@ func main() {
 	proxy := flag.String("proxy", "", "Proxy URL (ex: http://127.0.0.1:8080 or socks5://...)")
 	silence := flag.Bool("silence", false, "Disables any UI")
 	live := flag.Bool("live", false, "print when finding a result (slower)")
-	outputFile := flag.String("o", "", "Output file path to save results as JSON")
+	outputFile := flag.String("save-json", "", "Output file path to save results as JSON")
 	bypass := flag.Bool("bypass", false, "Enable WAF bypass techniques")
 	extension := flag.String("ext", "", "Additional extensions, separated by commas (e.g. .php, .bak)")
 	rate := flag.Int("rate", 20, "Maximum number of requests per second (RPS). Set 0 to disable rate limiting")
 	filterSize := flag.Int("filter-size", 0, "filter pages by size (ex: -filter-size 5)")
 	filterLine := flag.Int("filter-line", 0, "filters pages by number of lines (ex: -filter-size 2)")
+	filterBody := flag.String("filter-body", "", "filters pages by words in body page (ex: -filter-body Not Found)")
 	filterTitle := flag.String("filter-title", "", "filters pages by title (ex: -filter-title 404|forbiden)")
 	randomAgent := flag.Bool("random-agent", false, "uses a random user agent per request")
 	shuffle := flag.Bool("shuffle", false, "shuffle the wordlist")
+	titleContains := flag.String("title-contains", "", "returns the path containing the title content")
+	bodyContains := flag.String("body-contains", "", "returns the path containing the body content")
+	regexBody := flag.String("regex-body", "", "Apply regex to the body (ex: -regex-body admin|login|dashboard)")
+	regexTitle := flag.String("regex-title", "", "Applies regex to the title (ex: regex-title admin|login)")
+	redirect := flag.Bool("redirect", false, "follow status code 3xx redirection")
+	statusOnly := flag.Bool("status-only", false, "the output only shows the status code and path")
+	retries := flag.Int("retries", 0, "Maximum number of attempts in a request")
+	compare := flag.String("compare", "", "Path to be compared to wordlist")
+	randomIp := flag.Bool("random-ip", false, "uses a random user agent per request")
 	flag.Parse()
 
 	if *url == "" {
@@ -103,9 +113,9 @@ func main() {
 		delayStr = fmt.Sprintf("%.1fs-%.1fs", minDelay, maxDelay)
 	}
 
-	rateStr := fmt.Sprintf("%dr/s", *rate)
+	rateStr := fmt.Sprintf("%dreq/s", *rate)
 	if *outputFile == "" {
-		dirbrute.PrintHeader(*url, *wordlist, strconv.Itoa(*threads), delayStr, fmt.Sprintf("%ds", *timeout), customHeader, valid, *stealth, *proxy, *silence, *bypass, *extension, rateStr)
+		dirbrute.PrintHeader(*url, *wordlist, strconv.Itoa(*threads), delayStr, fmt.Sprintf("%ds", *timeout), customHeader, valid, *stealth, *proxy, *silence, *bypass, *extension, rateStr, *filterBody, *filterTitle, *filterLine, *filterSize, *shuffle, *randomAgent, *live, *bodyContains, *titleContains, *regexBody, *regexTitle, *statusOnly, *retries, *compare, *randomIp)
 	}
 
 	if !*silence {
@@ -127,37 +137,60 @@ func main() {
 		maxDelay = 0.4
 	}
 
-	resultado, temp := dirbrute.Parser(*url, *threads, *wordlist, minDelay, maxDelay, *timeout, customHeader, valid, *stealth, *proxy, *silence, *live, *bypass, listExtension, *rate, *filterSize, *filterLine, *filterTitle, *randomAgent, *shuffle)
+	resultado, temp := dirbrute.Parser(*url, *threads, *wordlist, minDelay, maxDelay, *timeout, customHeader, valid, *stealth, *proxy, *silence, *live, *bypass, listExtension, *rate, *filterSize, *filterLine, *filterTitle, *randomAgent, *shuffle, *titleContains, *bodyContains, *filterBody, *regexBody, *regexTitle, *redirect, *statusOnly, *retries, *compare, *randomIp)
 
 	resultadoJson := dirbrute.PrepareResultsForJSON(resultado)
 
-	if !*live {
-		if *outputFile != "" {
-    	err := dirbrute.SaveJson(resultadoJson, *outputFile)
-    	if err != nil {
+	if *statusOnly && *live {
+    if *outputFile != "" {
+      err := dirbrute.SaveJson(resultadoJson, *outputFile)
+      if err != nil {
         fmt.Printf("Error saving JSON to %s: %v\n", *outputFile, err)
         os.Exit(1)
-    	}
-    	fmt.Printf("Results saved to %s\n", *outputFile)
-		} else {
-    	for _, v := range resultado {
-    	    fmt.Printf("%s[%3d]%s  %-26s Size: %-6dB Lines: %-5d %-6s %-11s\n",
-    	        v.Color, v.Status, dirbrute.Reset,
-    	        v.URL,
-    	        v.Size,
-    	        v.Lines,
-    	        v.Time,
-    	        v.Label,
-    	    )
-    	}
-		}
-	}
+      }
+      fmt.Printf("Results saved to %s\n", *outputFile)
+    }
+	} else if *statusOnly {
+    for _, v := range resultado {
+      fmt.Printf("%s[%3d]%s %-26s\n",
+        v.Color, v.Status, dirbrute.Reset,
+        v.URL,
+      )
+    }
+    if *outputFile != "" {
+      err := dirbrute.SaveJson(resultadoJson, *outputFile)
+      if err != nil {
+        fmt.Printf("Error saving JSON to %s: %v\n", *outputFile, err)
+        os.Exit(1)
+      }
+      fmt.Printf("Results saved to %s\n", *outputFile)
+    }
+	} else if !*live {
+    if *outputFile != "" {
+      err := dirbrute.SaveJson(resultadoJson, *outputFile)
+      if err != nil {
+        fmt.Printf("Error saving JSON to %s: %v\n", *outputFile, err)
+        os.Exit(1)
+      }
 
+      fmt.Printf("Results saved to %s\n", *outputFile)
+    } else {
+      for _, v := range resultado {
+        fmt.Printf("%s[%3d]%s  %-26s Size: %-6dB Lines: %-5d %-6s %-11s\n",
+            v.Color, v.Status, dirbrute.Reset,
+            v.URL,
+            v.Size,
+            v.Lines,
+            v.Time,
+            v.Label,
+        )
+      }
+    }
+	}
 	if !*silence {
 		dirbrute.PrintLine("_", 80)
 		fmt.Printf("\n%s[✓]%s Scan completed in %s%s%s\n\n", dirbrute.Green, dirbrute.Reset, dirbrute.Blue, dirbrute.FormatDuration(temp), dirbrute.Reset)
 	}
-
 	if len(resultado) == 0 {
 		fmt.Println(dirbrute.Red + "\n[!!] No path found" + dirbrute.Reset)
 	}
