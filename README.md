@@ -135,8 +135,8 @@ vorin/
 | `-save-json`       | Path to save results as JSON                                 | *None*                           | `-save-json results.json`                            |
 | `-filter-size`  | Filter pages by size | `0`      |  `-filter-size  2`  |
 | `-filter-line` | Filters pages by number of lines |  `0` |   `-filter-line 1`  |
-|  `-filter-title` | Filters page by title  | *None*  | `-filter-title "404 Not Found"` |
-| `-filter-body`  | Filter page by words  |  *None*     | `-filter-body "admin"`  |
+|  `-filter-title` | Filters page by title  | *None*  | `-filter-title "Error"` |
+| `-filter-body`  | Filter page by words  |  *None*     | `-filter-body "404 Not Found"`  |
 | `-shuffle`  | Fhuffle the wordlist  | `false`    |  `-shuffle`    |
 | `-regex-body` | Apply regex to the body | *None*  | `-regex-body "dashboard"` |
 | `-regex-title` | Apply regex to the title | *None* | `-regex-title "admin"`  |
