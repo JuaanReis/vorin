@@ -6,15 +6,15 @@
   <tr>
     <td align="center">
       <a href="https://github.com/JuaanReis">
-      <img src="https://github.com/JuaanReis.png" width="100px;" alt="Juan Reis avatar" style="border-radius: 50%;"/>
+        <img src="https://github.com/JuaanReis.png?size=100" width="100px;" alt="Juan Reis avatar"/>
         <br />
         <sub><b>Juan Reis</b></sub>
       </a>
       <br />
       <small>
-         Core Dev & Maintainer <br>
+        Core Dev & Maintainer <br>
         Powered by insomnia and Toddy <br>
-        Bug bounty hunter (never)
+        Bug bounty hunter (sometimes)
       </small>
     </td>
   </tr>
@@ -24,15 +24,15 @@
 
 ### What I did (basically everything):
 
-| Area                | Description                                                               |
-|---------------------|---------------------------------------------------------------------------|
-|  Core Logic        | Full Go-based architecture from parser to threading control                |
-|  Documentation     | Stylish README, flag examples, usage instructions                          |
-|  Filters           | Body/title/size/line filters, regex, fake content comparator               |
-|  Stealth Mode      | Random headers, fake IPs, random User-Agents                               |
-|  Performance       | Rate limiter, retries, goroutine orchestration, delay control              |
-|  Dumb Ideas™       | `-compare`, `-regex-body`, sarcastic terminal messages (my specialty)      |
-|  Wordlist Support  | Auto extensions, shuffle, and bypass tricks                                |
+| Area              | Description                                                               |
+|-------------------|---------------------------------------------------------------------------|
+| Core Logic        | Full Go-based architecture from parser to threading control               |
+| Documentation     | Stylish README, flag examples, usage instructions                         |
+| Filters           | Body/title/size/line filters, regex, fake content comparator              |
+| Stealth Mode      | Random headers, fake IPs, random User-Agents                              |
+| Performance       | Rate limiter, retries, goroutine orchestration, delay control             |
+| Dumb Ideas™       | `-compare`, `-regex-body`, sarcastic terminal messages (my specialty)     |
+| Wordlist Support  | Auto extensions, shuffle, and bypass tricks                               |
 
 ---
 
@@ -49,11 +49,12 @@ You don't have to be a movie-style hacker — just know where to slap a `return`
 > Special thanks to my chair and my cracked Linux Mint setup for not exploding during compile time.
 
 > *Just submit a pull request and add your ugly face like this:*
-```
+
+```html
 <td align="center">
   <a href="https://github.com/YOUR_USERNAME">
-    <img src="https://github.com/YOUR_USERNAME.png" width="100px;" alt="Your Avatar" style="border-radius: 50%"/>
-  <br />
+    <img src="https://github.com/YOUR_USERNAME.png?size=100" width="100px;" alt="Your Avatar"/>
+    <br />
     <sub>
       <b>Your Name</b>
     </sub>
@@ -62,5 +63,4 @@ You don't have to be a movie-style hacker — just know where to slap a `return`
   <small> Your Role or Contribution <br> Something cool or funny </small>
 </td>
 ```
-
 > Don't take jokes to heart ❤️
