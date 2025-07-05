@@ -269,6 +269,8 @@ GPL License. See the [LICENSE](LICENSE) file for more details.
 Feel free to open issues or pull requests.
 If you want to suggest payloads, improvements, or report bugs, go ahead!
 
+> See the [CONTRIBUTORS](CONTRIBUTORS.md) file for more details.
+
 ---
 
 Developed with ❤️ by [Juan](https://github.com/JuaanReis)
