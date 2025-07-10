@@ -43,7 +43,7 @@ func printInfo(title string, value string, width int) {
 func PrintHeader(url, wordlist, threads string, delay string, timeout string, header map[string]string, valid map[int]bool, stealth bool, proxy string, silence bool, bypass bool, extension string, rate string, filterT string, filterB string, filterL int, filterS int, shuffle bool, randomAgent bool, live bool, contentB string, contentT string, regexB string, regexT string, statusOnly bool, retries int, compare string, randomIp bool, method string, payload string) {
 	if !silence {
 		fmt.Println()
-		PrintLine("_", 80, "Vorin v1.3.0")
+		PrintLine("_", 80, "Vorin v1.3.1")
 		PrintLine(" ", 80)
 		if method == "POST" {
 			printInfo("Method", method, 18)
