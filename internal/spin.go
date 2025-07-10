@@ -1,4 +1,4 @@
-package dirbrute
+package internal
 
 import (
 	"fmt"
@@ -6,11 +6,11 @@ import (
 )
 
 func Spinner(prefix string, done <-chan bool) {
-	symbols := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴","⠦","⠧","⠇","⠏"}
+	symbols := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 	i := 0
 	for {
 		select {
-		case <- done:
+		case <-done:
 			fmt.Print("\r")
 			return
 		default:

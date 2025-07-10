@@ -1,22 +1,22 @@
-package dirbrute
+package internal
 
 import (
-	"strings"
-	"math/rand"
 	"fmt"
+	"math/rand"
+	"strings"
 )
 
 func ApplyBypassTechniques(path string) []string {
-    var bypassedPaths []string
-    bypassedPaths = append(bypassedPaths, path)
-    bypassedPaths = append(bypassedPaths, strings.ToUpper(path))
-    bypassedPaths = append(bypassedPaths, path+"?")
-    bypassedPaths = append(bypassedPaths, "/./"+path)
-    bypassedPaths = append(bypassedPaths, "/..;/"+path)
-    bypassedPaths = append(bypassedPaths, "/%2e/"+path)
-    bypassedPaths = append(bypassedPaths, "/"+path+"/.")
+	var bypassedPaths []string
+	bypassedPaths = append(bypassedPaths, path)
+	bypassedPaths = append(bypassedPaths, strings.ToUpper(path))
+	bypassedPaths = append(bypassedPaths, path+"?")
+	bypassedPaths = append(bypassedPaths, "/./"+path)
+	bypassedPaths = append(bypassedPaths, "/..;/"+path)
+	bypassedPaths = append(bypassedPaths, "/%2e/"+path)
+	bypassedPaths = append(bypassedPaths, "/"+path+"/.")
 
-    return bypassedPaths
+	return bypassedPaths
 }
 
 func RandomIP() string {

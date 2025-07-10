@@ -1,4 +1,4 @@
-package dirbrute
+package internal
 
 import "fmt"
 

@@ -1,10 +1,9 @@
-package dirbrute
+package internal
 
 import (
-	"strings"
 	"strconv"
+	"strings"
 )
-
 
 func ParseStatusCodes(input string) map[int]bool {
 	result := make(map[int]bool)

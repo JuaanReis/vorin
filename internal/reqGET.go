@@ -1,4 +1,4 @@
-package dirbrute
+package internal
 
 import (
 	"fmt"
@@ -6,28 +6,31 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 	"github.com/JuaanReis/vorin/pkg"
 	"github.com/schollz/progressbar/v3"
-	"regexp"
 )
 
 type Resultado struct {
 	Status int
+	Resposta string
 	URL    string
 	Title  string
 	Size   int
 	Lines  int
-	Time time.Duration
-	Label string
-	Color string
+	Time   time.Duration
+	Label  string
+	Color  string
+	User string
+	Pass string
 }
 
 var spinnerDone = make(chan bool)
 
-func Parser(endereco string, threads int, wordlist string, minDelay float64, maxDelay float64, timeout int, customHeaders map[string]string, code map[int]bool, stealth bool, proxy string, silence bool, live bool, bypass bool, extension []string, rateLimit int, filterSize int, filterLine int, filterTitle string, randomAgent bool, shuffle bool, filterTitleContent string, filterBodyContent string, filterBody string, regexBody string, regexTitle string, redirect bool, statusOnly bool, retries int, compare string, randomIp bool) ([]Resultado, time.Duration) {
+func ParserGET(endereco string, threads int, wordlist string, minDelay float64, maxDelay float64, timeout int, customHeaders map[string]string, code map[int]bool, stealth bool, proxy string, silence bool, live bool, bypass bool, extension []string, rateLimit int, filterSize int, filterLine int, filterTitle string, randomAgent bool, shuffle bool, filterTitleContent string, filterBodyContent string, filterBody string, regexBody string, regexTitle string, redirect bool, statusOnly bool, retries int, compare string, randomIp bool) ([]Resultado, time.Duration) {
 	var resultados []Resultado
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -75,7 +78,7 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 
 	if shuffle {
 		rand.Seed(time.Now().UnixNano())
-			rand.Shuffle(len(file), func(i, j int) {
+		rand.Shuffle(len(file), func(i, j int) {
 			file[i], file[j] = file[j], file[i]
 		})
 	}
@@ -145,7 +148,6 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 		}
 	}()
 
-
 	if regexTitle != "" {
 		var err error
 		compiledRegexTitle, err = regexp.Compile("(?i)" + regexTitle)
@@ -201,10 +203,10 @@ func Parser(endereco string, threads int, wordlist string, minDelay float64, max
 				MountHeaders(req, p, stealth, bypass, customHeaders)
 
 				if randomIp && (!bypass || !stealth) {
-    			ip := RandomIP()
-    			req.Header.Set("X-Client-IP", ip)
-    			req.Header.Set("X-Forwarded-For", ip)
-    			req.Header.Set("CF-Connecting-IP", ip)
+					ip := RandomIP()
+					req.Header.Set("X-Client-IP", ip)
+					req.Header.Set("X-Forwarded-For", ip)
+					req.Header.Set("CF-Connecting-IP", ip)
 				}
 
 				if randomAgent && !stealth && !bypass {

@@ -1,4 +1,4 @@
-package dirbrute
+package internal
 
 import (
 	"encoding/json"
@@ -8,15 +8,15 @@ import (
 
 func SaveJson(resultados []ResultadoJSON, filename string) error {
 	file, err := os.Create(filename)
-    if err != nil {
-        return err
-    }
-    defer file.Close()
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
-    encoder := json.NewEncoder(file)
-    encoder.SetIndent("", "  ")
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
 
-    return encoder.Encode(resultados)
+	return encoder.Encode(resultados)
 }
 
 type ResultadoJSON struct {

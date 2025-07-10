@@ -1,11 +1,11 @@
-package dirbrute
+package internal
 
 import (
-	"time"
-	"math/rand"
-	"strings"
 	"fmt"
+	"math/rand"
 	"net/http"
+	"strings"
+	"time"
 )
 
 type HeaderFlags []string
@@ -68,7 +68,6 @@ func GetRandomHeaders() map[string]string {
 	}
 }
 
-
 func (h *HeaderFlags) String() string {
 	return strings.Join(*h, ", ")
 }
@@ -125,4 +124,14 @@ func MountHeaders(req *http.Request, path string, stealth, bypass bool, custom m
 		req.Header.Set("Cache-Control", "no-cache")
 		req.Header.Set("Pragma", "no-cache")
 	}
+}
+
+
+func RandomUserAgent() string {
+    agents := []string{
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/15.1 Safari/605.1.15",
+        "Mozilla/5.0 (X11; Linux x86_64) Gecko/20100101 Firefox/113.0",
+    }
+    return agents[rand.Intn(len(agents))]
 }

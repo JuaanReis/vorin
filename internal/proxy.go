@@ -1,11 +1,11 @@
-package dirbrute
+package internal
 
 import (
-	"net/url"
-	"net/http"
-	"time"
-	"os"
 	"fmt"
+	"net/http"
+	"net/url"
+	"os"
+	"time"
 )
 
 func CreateClientProxy(proxy string, timeout int) *http.Client {
@@ -25,7 +25,7 @@ func CreateClientProxy(proxy string, timeout int) *http.Client {
 	}
 
 	transport := &http.Transport{
-		Proxy: http.ProxyURL(proxyUrl),
+		Proxy:               http.ProxyURL(proxyUrl),
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
 		IdleConnTimeout:     90 * time.Second,

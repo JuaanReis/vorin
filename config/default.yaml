@@ -1,5 +1,9 @@
-threads: 50
-timeout: 5
-user-agents:
-  - Mozilla/5.0
-  - curl/7.81.0
+Threads: 35
+Timeout: 5
+Rate: 25
+Delay: "0.1-0.2"
+Status: "200,301,302,401,403"
+Method: "GET"
+Wordlist: "assets/wordlist/common.txt"
+Userlist: "assets/username/top-usernames-shortlist.txt"
+Passlist: "assets/password/rockyou-20.txt"

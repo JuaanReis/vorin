@@ -86,6 +86,11 @@ chmod +x vorin
 ```bash
 ./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -rate 35 -d 0.6-0.7 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -s 200,301,302,403 -proxy socks5://127.0.0.1:9050 -ext php
 ```
+`This is an example of brute force login`
+
+```
+./vorin -method post -u "https:/target.com/login" -userlist users.txt -passlist passwords.txt -P "user=USERFUZZ&password=PASSFUZZ" -t 30 --live
+```
 
 ## How it works
 
@@ -115,11 +120,16 @@ vorin/
 | Flag       | Description                                                  | Default                        | Example                                      |
 |------------|--------------------------------------------------------------|--------------------------------|----------------------------------------------|
 | `-u`       | Target URL (must contain `Fuzz`)                             | *None*                             | `-u https://site.com/Fuzz`                   |
+| `method` | request Method (POST or GET) | `GET` | `-method POST` |
+| `-userlist` | User wordlist file for POST | [top-usernames-shortlist.txt](http://_vscodecontentref_/0) | `-users.txt` |
+| `-passlist` | Password wordlist file for POST | [rockyou-20.txt](http://_vscodecontentref_/1)  | `-passlist password.txt` |
+| `-P` | POST payload template (`USERFUZZ`, `PASSFUZZ`) | *None* | `-P "user=USERFUZZ&password=PASSFUZZ"` |
 | `-w`       | Path to wordlist                                             | `assets/wordlist/common.txt`   | `-w mylist.txt`                              |
-| `-t`       | Number of concurrent threads                                 | `50`                             | `-t 100`                                     |
+| `-t`       | Number of concurrent threads                                 | `35`                             | `-t 100`                                     |
 | `-d`       | Random delay between requests (e.g. 1-5)                     | `0.1s-0.2s`                           | `-d 1-3`                                     |
 | `-timeout` | Connection timeout                                           | `5s`                           | `-timeout 10`                                |
-| `-rate`    |  Maximum number of requests per second (RPS). Set 0 to disable rate limiting | `20r/s`        |  `-rate 45`   |
+| `-retries` | Number of attempts for a request | `0`  | `-retries 2` |
+| `-rate`    |  Maximum number of requests per second (RPS). Set 0 to disable rate limiting | `25r/s`        |  `-rate 45`   |
 | `-H`       | Custom headers (repeatable)                                  | *None*                           | `-H "X-Test: true"`                          |
 |  `-random-agent` | uses a random user agent per request  | `false`    |   `-random-agent`  |
 |  `-random-ip` | uses a random IP per request | `false` | `-random-ip` |
@@ -141,6 +151,7 @@ vorin/
 | `-regex-body` | Apply regex to the body | *None*  | `-regex-body "dashboard"` |
 | `-regex-title` | Apply regex to the title | *None* | `-regex-title "admin"`  |
 | `-compare` | Path to be compared to wordlist | `Default in the code` | `-compare "a1b2c3d4"` |
+| `-help` | shows all flags and examples | `false` | `-help` |
 
 ## Examples
 
@@ -149,7 +160,7 @@ Below is a real example of the tool running in a test environment, showing detec
 > Below a proxy was also used (must be activated manually)
 
 ![Scan Example](assets/screenshots/showing5.png)
-
+ 
 > Below is a scan with stealth mode
 
 ![Stealth](assets/screenshots/showing5stealth.png)

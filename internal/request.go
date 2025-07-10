@@ -1,11 +1,11 @@
-package dirbrute
+package internal
 
 import (
-	"fmt"
-	"time"
-	"net/http"
-	"io"
 	"compress/gzip"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
 )
 
 func GetRequest(req *http.Request, client *http.Client, reader io.Reader) ([]byte, *http.Response, error) {

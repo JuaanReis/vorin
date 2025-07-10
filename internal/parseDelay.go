@@ -1,9 +1,9 @@
-package dirbrute
+package internal
 
 import (
-	"strings"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 func ParseDelay(input string) (float64, float64, error) {

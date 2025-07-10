@@ -1,8 +1,8 @@
-package dirbrute
+package internal
 
 import (
-	"time"
 	"fmt"
+	"time"
 )
 
 func FormatDuration(d time.Duration) string {
