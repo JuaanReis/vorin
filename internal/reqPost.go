@@ -6,102 +6,87 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
 	"github.com/JuaanReis/vorin/pkg"
-	"github.com/schollz/progressbar/v3"
 	"regexp"
+	"sync/atomic"
 )
 
-func ParserPost(endereco string, threads int, userlist string, passlist string, payloadTemplate string,  minDelay float64, maxDelay float64, timeout int, customHeaders map[string]string, randomAgent bool, shuffle bool, live bool, statusOnly bool, regexBody string, regexTitle string) ([]Resultado, time.Duration) {
+func ParserPost(cfg ParserConfigPost) ([]Resultado, time.Duration) {
     var resultados []Resultado
     var mu sync.Mutex
     var wg sync.WaitGroup
 	var compiledRegexTitle, compiledRegexBody *regexp.Regexp
     var err error
-    if regexTitle != "" {
-        compiledRegexTitle, err = regexp.Compile("(?i)" + regexTitle)
-        if err != nil {
-            fmt.Printf("[ERROR]: Invalid regexTitle: %v\n", err)
-            os.Exit(1)
-        }
+	doneBar := make(chan struct{})
+    if cfg.RegexTitle != "" {
+        compiledRegexTitle, err = regexp.Compile("(?i)" + cfg.RegexTitle)
+        FatalIfErr(err)
     }
-    if regexBody != "" {
-        compiledRegexBody, err = regexp.Compile("(?i)" + regexBody)
-        if err != nil {
-            fmt.Printf("[ERROR]: Invalid regexBody: %v\n", err)
-            os.Exit(1)
-        }
+    if cfg.RegexBody != "" {
+        compiledRegexBody, err = regexp.Compile("(?i)" + cfg.RegexBody)
+        FatalIfErr(err)
     }
-
+    
     fakeUser := "__vorin_fake_user_473827382__"
     fakePass := "__vorin_fake_pass_473827382__"
-    fakePayload := strings.ReplaceAll(payloadTemplate, "USERFUZZ", fakeUser)
+    fakePayload := strings.ReplaceAll(cfg.PayloadTemplate, "USERFUZZ", fakeUser)
     fakePayload = strings.ReplaceAll(fakePayload, "PASSFUZZ", fakePass)
 
-    reqFake, err := http.NewRequest("POST", endereco, strings.NewReader(fakePayload))
-    if err != nil {
-        fmt.Printf("[ERROR]: %v\n", err)
-        os.Exit(1)
-    }
+    reqFake, err := http.NewRequest("POST", cfg.Endereco, strings.NewReader(fakePayload))
+    FatalIfErr(err)
     reqFake.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-    for k, v := range customHeaders {
+    for k, v := range cfg.CustomHeaders {
         reqFake.Header.Set(k, v)
     }
-    if randomAgent {
+    if cfg.RandomAgent {
         reqFake.Header.Set("User-Agent", RandomUserAgent())
     }
 
-    users, err := pkg.ReadLines(userlist)
-    if err != nil {
-        fmt.Printf("[ERROR]: %v\n", err)
-        os.Exit(1)
-    }
-    passes, err := pkg.ReadLines(passlist)
-    if err != nil {
-        fmt.Printf("[ERROR]: %v\n", err)
-        os.Exit(1)
-    }
+    users, err := pkg.ReadLines(cfg.Userlist)
+    FatalIfErr(err)
+    passes, err := pkg.ReadLines(cfg.Passlist)
+    FatalIfErr(err)
 
-    if shuffle { 
+    if cfg.Shuffle { 
         rand.Seed(time.Now().UnixNano())
         rand.Shuffle(len(users), func(i, j int) { users[i], users[j] = users[j], users[i] })
         rand.Shuffle(len(passes), func(i, j int) { passes[i], passes[j] = passes[j], passes[i] })
     }
 
     client := &http.Client{
-        Timeout: time.Duration(timeout) * time.Second,
+        Timeout: time.Duration(cfg.Timeout) * time.Second,
     }
 
     respFake, err := client.Do(reqFake)
-    if err != nil || respFake == nil {
-        fmt.Printf("[ERROR]: %v\n", err)
-        os.Exit(1)
-    }
+    FatalIfErr(err)
     defer respFake.Body.Close()
 
     bodyFake, err := io.ReadAll(respFake.Body)
-    if err != nil {
-        fmt.Printf("[ERROR]: %v\n", err)
-        os.Exit(1)
-    }
+    FatalIfErr(err)
+
     fakeContent := string(bodyFake)
     fakeTitle := getTitle(fakeContent)
     fakeSize := len(fakeContent)
     fakeStatus := respFake.StatusCode
 
-    totalComb := len(users) * len(passes)
-    sem := make(chan struct{}, threads)
-    bar := progressbar.NewOptions(totalComb,
-        progressbar.OptionSetDescription("Testing POST payloads..."),
-        progressbar.OptionShowCount(),
-        progressbar.OptionSetWidth(30),
-        progressbar.OptionClearOnFinish(),
-    )
+    totalPaths := len(users) * len(passes)
+
+    sem := make(chan struct{}, cfg.Threads)
+
+    var (
+		current    int32
+		errors     int32
+		reqPerSec  int32
+	)
 
     ini := time.Now()
+
+	if !cfg.Silence {
+		go UpdateProgressBar(totalPaths, &current, &errors, &reqPerSec, ini, doneBar)
+	}
 
     for _, user := range users {
         for _, pass := range passes {
@@ -110,27 +95,27 @@ func ParserPost(endereco string, threads int, userlist string, passlist string, 
             go func(user, pass string) {
                 defer wg.Done()
                 defer func() { <-sem }()
-                bar.Add(1)
+			    atomic.AddInt32(&current, 1)
+			    atomic.AddInt32(&reqPerSec, 1)
 
-                if minDelay > 0 || maxDelay > 0 {
-                    delayRange := maxDelay - minDelay
-                    delay := minDelay + rand.Float64()*delayRange
+                if cfg.MinDelay > 0 || cfg.MaxDelay > 0 {
+                    delayRange := cfg.MaxDelay - cfg.MinDelay
+                    delay := cfg.MinDelay + rand.Float64()*delayRange
                     time.Sleep(time.Duration(delay * float64(time.Second)))
                 }
 
-                // Replace FUZZ for user and password in the payload
-                payload := strings.ReplaceAll(payloadTemplate, "USERFUZZ", user)
+                payload := strings.ReplaceAll(cfg.PayloadTemplate, "USERFUZZ", user)
                 payload = strings.ReplaceAll(payload, "PASSFUZZ", pass)
 
-                req, err := http.NewRequest("POST", endereco, strings.NewReader(payload))
+                req, err := http.NewRequest("POST", cfg.Endereco, strings.NewReader(payload))
                 if err != nil {
                     return
                 }
                 req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-                for k, v := range customHeaders {
+                for k, v := range cfg.CustomHeaders {
                     req.Header.Set(k, v)
                 }
-                if randomAgent {
+                if cfg.RandomAgent {
                     req.Header.Set("User-Agent", RandomUserAgent())
                 }
 
@@ -162,9 +147,9 @@ func ParserPost(endereco string, threads int, userlist string, passlist string, 
                     return
                 }
 
-                if live {
-                    bar.Clear()
-                    if statusOnly {
+                if cfg.Live {
+                    fmt.Print("\r\033[K")
+                    if cfg.StatusOnly {
                         fmt.Printf("%s[%3d]%s user=%s pass=%s\n", color, resp.StatusCode, Reset, user, pass)
                     } else {
                         fmt.Printf("%s[%3d]%s user=%s pass=%s Size: %-6dB Lines: %-5d %-6s %-11s\n",
@@ -182,7 +167,6 @@ func ParserPost(endereco string, threads int, userlist string, passlist string, 
                 resultados = append(resultados, Resultado{
                     Label:    statusLabel,
                     Status:   resp.StatusCode,
-                    URL:      endereco,
                     Title:    title,
                     Size:     size,
                     Lines:    lines,
@@ -198,7 +182,10 @@ func ParserPost(endereco string, threads int, userlist string, passlist string, 
     }
 
     wg.Wait()
-    bar.Clear()
+	fmt.Print("\r\033[K")             
+	fmt.Print("\033[1A\r\033[K")   
+	<-doneBar
+	fmt.Println()
     end := time.Since(ini)
     return resultados, end
 }

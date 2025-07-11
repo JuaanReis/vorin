@@ -84,12 +84,12 @@ chmod +x vorin
 `This is a basic example of a scan`
 
 ```bash
-./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -rate 35 -d 0.6-0.7 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -s 200,301,302,403 -proxy socks5://127.0.0.1:9050 -ext php
+./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -rate 35 -d 0.6-0.7 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -s 200,301,302,403 -proxy socks5://127.0.0.1:9050 -ext .php
 ```
 `This is an example of brute force login`
 
-```
-./vorin -method post -u "https:/target.com/login" -userlist users.txt -passlist passwords.txt -P "user=USERFUZZ&password=PASSFUZZ" -t 30 --live
+```bash
+./vorin -method post -u "https:/target.com/login" -userlist users.txt -passlist passwords.txt -P "user=USERFUZZ&password=PASSFUZZ" -t 30 -live
 ```
 
 ## How it works
@@ -157,13 +157,19 @@ vorin/
 
 Below is a real example of the tool running in a test environment, showing detection of hidden directories and sensitive files:
 
-> Below a proxy was also used (must be activated manually)
+> Below is a basic test with GET method (as is visible in the image)
 
-![Scan Example](assets/screenshots/showing5.png)
+![Scan Example GET](assets/screenshots/v1.3.1/reqGet.png)
+
+> Below is a basic test with the POST method (as it is also visible in the image)
+
+![Scan Example POST](assets/screenshots/v1.3.1/reqPost.png)
+
+> *I did not finish this scan for two reasons (1. I was lazy, 2. I wouldn't find anything since there's no login page)*
  
 > Below is a scan with stealth mode
 
-![Stealth](assets/screenshots/showing5stealth.png)
+![Stealth](assets/screenshots/v1.3.1/stealth.png)
 
 
 Stealth mode comes with the following settings:
@@ -180,7 +186,7 @@ Stealth mode comes with the following settings:
 
 > Below is a scan with bypass (it is clearly slower)
 
-![Bypass](assets/screenshots/showing5Bypass.png)
+![Bypass](assets/screenshots/v1.3.1/bypass.png)
 
 *Not all the results of this scan appeared because many paths were discovered*
 
@@ -195,9 +201,9 @@ The bypass configuration is as follows:
 }
 ```
 
-> Below is a picture of a scan with all other modes active, it was not finished due to laziness. (*time marked by the red line*)
+> Below is a picture of a scan with all other modes active, it was not finished due to laziness. 
 
-![Monster](assets/screenshots/showing5All.png)
+![Monster](assets/screenshots/v1.3.1/bypass_stealth.png)
 
 *I really thought it would take longer, if you can do this test, put the total time here in the readme*
 

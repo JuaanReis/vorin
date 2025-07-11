@@ -19,16 +19,6 @@ func SaveJson(resultados []ResultadoJSON, filename string) error {
 	return encoder.Encode(resultados)
 }
 
-type ResultadoJSON struct {
-	Status int    `json:"status"`
-	URL    string `json:"path"`
-	Title  string `json:"title"`
-	Size   int    `json:"size"`
-	Lines  int    `json:"lines"`
-	TimeMs int64  `json:"time_ms"`
-	Label  string `json:"label"`
-}
-
 var ansi = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
 func stripANSICodes(input string) string {

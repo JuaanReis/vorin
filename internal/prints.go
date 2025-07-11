@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"os"
 )
 
 func PrintLine(char string, length int, text ...string) {
@@ -40,14 +41,19 @@ func printInfo(title string, value string, width int) {
 	fmt.Printf(" $  %-*s : %s\n", width, title, value)
 }
 
-func PrintHeader(url, wordlist, threads string, delay string, timeout string, header map[string]string, valid map[int]bool, stealth bool, proxy string, silence bool, bypass bool, extension string, rate string, filterT string, filterB string, filterL int, filterS int, shuffle bool, randomAgent bool, live bool, contentB string, contentT string, regexB string, regexT string, statusOnly bool, retries int, compare string, randomIp bool, method string, payload string) {
+func PrintHeader(banner string, url, wordlist, threads string, delay string, timeout string, header map[string]string, valid map[int]bool, stealth bool, proxy string, silence bool, bypass bool, extension string, rate string, filterT string, filterB string, filterL int, filterS int, shuffle bool, randomAgent bool, live bool, contentB string, contentT string, regexB string, regexT string, statusOnly bool, retries int, compare string, randomIp bool, method string, payload string, userlist string, passlist string, redirect bool) {
+	pack := Version()
 	if !silence {
 		fmt.Println()
-		PrintLine("_", 80, "Vorin v1.3.1")
+		PrintLine("_", 80, pack)
+		PrintLine(" ", 80)
+		fmt.Println(banner)
 		PrintLine(" ", 80)
 		if method == "POST" {
 			printInfo("Method", method, 18)
 			printInfo("Payload", payload, 18)
+			printInfo("Userlist", userlist, 18)
+			printInfo("Passlist", passlist, 18)
 		} else {
 			printInfo("Method", method, 18)
 		}
@@ -57,6 +63,9 @@ func PrintHeader(url, wordlist, threads string, delay string, timeout string, he
 		if statusOnly {
 			printInfo("Status Only", "Activate", 18)
 		}
+		if redirect {
+			printInfo("Follow redirects", "Activate", 18)
+		}
 		if stealth {
 			printInfo("\033[31mStealth\033[0m", "Activate", 27)
 		}
@@ -64,16 +73,16 @@ func PrintHeader(url, wordlist, threads string, delay string, timeout string, he
 			printInfo("\033[31mBypass\033[0m", "Activate", 27)
 		}
 		printInfo("URL", url, 18)
-		printInfo("Wordlist", wordlist, 18)
-		if rate != "" {
+		if wordlist != "" {
+			printInfo("Wordlist", wordlist, 18)
+		}
+		if rate != "0" {
 			printInfo("Rate", rate, 18)
 		}
 		printInfo("Threads", threads, 18)
-		if delay == "0" {
-			printInfo("Delay", "Disable", 18)
-		} else {
+		if delay != "0.0-0.0" {
 			printInfo("Delay", delay, 18)
-		}
+		} 
 		if compare != "" {
 			printInfo("compared to", compare, 18)
 		}
@@ -146,6 +155,13 @@ func PrintHeader(url, wordlist, threads string, delay string, timeout string, he
 
 func PrintError(msg string) {
 	fmt.Printf("\033[31m[ERROR]\033[0m %s\n", msg)
+}
+
+func FatalIfErr(err error) {
+	if err != nil {
+		fmt.Printf("[ERROR] %v:\n", err)
+		os.Exit(1)
+	}
 }
 
 func PrintHelp() {

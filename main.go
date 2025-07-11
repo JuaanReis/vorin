@@ -11,23 +11,21 @@ import (
 )
 
 func main() {
-	internal.NormalizeFlags()
-	cfg, err := internal.LoadConfig("config/default.yaml")
-	if err != nil {
-		fmt.Println("Could not load config:", err)
-	}
+	banner, err := os.ReadFile("assets/banner/banner.txt")
+	internal.FatalIfErr(err)
+	bannerString := string(banner)
     var headers internal.HeaderFlags
     var statusCodeFlags string
     help := flag.Bool("help", false, "Show help message")
     flag.BoolVar(help, "h", false, "Show help message (shorthand)")
     url := flag.String("u", "", "Target URL")
-    threads := flag.Int("t", cfg.Threads, "Number of concurrent threads")
-    wordlist := flag.String("w", cfg.Wordlist, "Path to wordlist")
+    threads := flag.Int("t", 35, "Number of concurrent threads")
+    wordlist := flag.String("w", "", "Path to wordlist")
     payload := flag.String("P", "", "data sent to the server")
-    delayFlag := flag.String("d", cfg.Delay, "Delay between requests, e.g. -d 1-5")
-    timeout := flag.Int("timeout", cfg.Timeout, "Request time")
+    delayFlag := flag.String("d", "", "Delay between requests, e.g. -d 1-5")
+    timeout := flag.Int("timeout", 5, "Request time")
     flag.Var(&headers, "H", "Custom headers. Ex: -H 'Authorization: Bearer x' -H 'X-Test: true'")
-    flag.StringVar(&statusCodeFlags, "s", cfg.Status, "status codes to be considered valid (ex: -s 200,301,302)")
+    flag.StringVar(&statusCodeFlags, "s", "200,301,302,401,403", "status codes to be considered valid (ex: -s 200,301,302)")
     stealth := flag.Bool("stealth", false, "stealth mode, slower less chance of getting caught")
     proxy := flag.String("proxy", "", "Proxy URL (ex: http://127.0.0.1:8080 or socks5://...)")
     silence := flag.Bool("silence", false, "Disables any UI")
@@ -35,7 +33,7 @@ func main() {
     outputFile := flag.String("save-json", "", "Output file path to save results as JSON")
     bypass := flag.Bool("bypass", false, "Enable WAF bypass techniques")
     extension := flag.String("ext", "", "Additional extensions, separated by commas (e.g. .php, .bak)")
-    rate := flag.Int("rate", cfg.Rate, "Maximum number of requests per second (RPS). Set 0 to disable rate limiting")
+    rate := flag.Int("rate", 0, "Maximum number of requests per second (RPS). Set 0 to disable rate limiting")
     filterSize := flag.Int("filter-size", 0, "filter pages by size (ex: -filter-size 5)")
     filterLine := flag.Int("filter-line", 0, "filters pages by number of lines (ex: -filter-size 2)")
     filterBody := flag.String("filter-body", "", "filters pages by words in body page (ex: -filter-body Not Found)")
@@ -51,9 +49,12 @@ func main() {
     retries := flag.Int("retries", 0, "Maximum number of attempts in a request")
     compare := flag.String("compare", "", "Path to be compared to wordlist")
     randomIp := flag.Bool("random-ip", false, "uses a random user agent per request")
-    method := flag.String("method", cfg.Method, "HTTP method to use (GET, POST)")
-    userlist := flag.String("userlist", cfg.Userlist, "User wordlist file")
-    passlist := flag.String("passlist", cfg.Passlist, "Password wordlist file")
+    method := flag.String("method", "GET", "HTTP method to use (GET, POST)")
+    userlist := flag.String("userlist", "assets/username/top-usernames-shortlist.txt", "User wordlist file")
+    passlist := flag.String("passlist", "assets/password/rockyou-20.txt", "Password wordlist file")
+	if *delayFlag == "" {
+		*delayFlag = "0.0-0.0"
+	}
     flag.Parse()
  
 	 if *help {
@@ -76,7 +77,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	if *wordlist == "" && *method == "GET" {
+		*wordlist = "assets/wordlist/common.txt"
+	}
+
 	chosenMethod := strings.ToUpper(*method)
+
+	if *wordlist == "" && chosenMethod != "POST" {
+		fmt.Printf("[ERROR] the flag -w (wordlist) is required for GET requests")
+		os.Exit(1)
+	}
 
 	statusCodeFlags = strings.ReplaceAll(statusCodeFlags, " ", "")
 
@@ -92,10 +102,10 @@ func main() {
 	customHeader := internal.ParseHeaderFlags(headers)
 
 	if *stealth {
-		if *rate == cfg.Rate {
+		if *rate == 0 {
 			*rate = 15
 		}
-		if *threads == cfg.Threads {
+		if *threads == 35 {
 			*threads = 30
 		}
 		if *timeout == 5 {
@@ -109,16 +119,16 @@ func main() {
 	}
 
 	if *bypass {
-		if *rate == cfg.Rate {
+		if *rate == 0 {
 			*rate = 15
 		}
-		if *threads == cfg.Threads {
+		if *threads == 35 {
 			*threads = 30
 		}
-		if *timeout == cfg.Timeout {
+		if *timeout == 5 {
 			*timeout = 8
 		}
-		if minDelay == 0.1 && maxDelay == 0.2 {
+		if minDelay == 0.0 && maxDelay == 0.0 {
 			minDelay = 0.2
 			maxDelay = 0.3
 		}
@@ -138,9 +148,15 @@ func main() {
 		delayStr = fmt.Sprintf("%.1fs-%.1fs", minDelay, maxDelay)
 	}
 
-	rateStr := fmt.Sprintf("%dreq/s", *rate)
+	var rateStr string 
+	if *rate > 0 {
+		rateStr = fmt.Sprintf("%-3dreq/s", *rate)
+	} else {
+		rateStr = "0"
+	}
+
 	if *outputFile == "" {
-		internal.PrintHeader(*url, *wordlist, strconv.Itoa(*threads), delayStr, fmt.Sprintf("%ds", *timeout), customHeader, valid, *stealth, *proxy, *silence, *bypass, *extension, rateStr, *filterBody, *filterTitle, *filterLine, *filterSize, *shuffle, *randomAgent, *live, *bodyContains, *titleContains, *regexBody, *regexTitle, *statusOnly, *retries, *compare, *randomIp, chosenMethod, *payload)
+		internal.PrintHeader(bannerString, *url, *wordlist, strconv.Itoa(*threads), delayStr, fmt.Sprintf("%ds", *timeout), customHeader, valid, *stealth, *proxy, *silence, *bypass, *extension, rateStr, *filterBody, *filterTitle, *filterLine, *filterSize, *shuffle, *randomAgent, *live, *bodyContains, *titleContains, *regexBody, *regexTitle, *statusOnly, *retries, *compare, *randomIp, chosenMethod, *payload, *userlist, *passlist, *redirect)
 	}
 
 	if !*silence {
@@ -155,7 +171,7 @@ func main() {
 	}
 
 	if *bypass && len(listExtension) > 0 && listExtension[0] != "" && !*stealth {
-		if *rate == 20 {
+		if *rate == 0 {
 			*rate = 20
 		}
 		if *threads == 30 {
@@ -171,15 +187,71 @@ func main() {
 	var resultado []internal.Resultado
 	var temp time.Duration
 
+	configGet := internal.ParserConfigGet{
+		Endereco:           *url,
+		Threads:            *threads,
+		Wordlist:           *wordlist,
+		MinDelay:           minDelay,
+		MaxDelay:           maxDelay,
+		Timeout:            *timeout,
+		CustomHeaders:      customHeader,
+		Code:               valid,
+		Stealth:            *stealth,
+		Proxy:              *proxy,
+		Silence:            *silence,
+		Live:               *live,
+		Bypass:             *bypass,
+		Extension:          listExtension,
+		RateLimit:          *rate,
+		FilterSize:         *filterSize,
+		FilterLine:         *filterLine,
+		FilterTitle:        *filterTitle,
+		RandomAgent:        *randomAgent,
+		Shuffle:            *shuffle,
+		FilterTitleContent: *titleContains,
+		FilterBodyContent:  *bodyContains,
+		FilterBody:         *filterBody,
+		RegexBody:          *regexBody,
+		RegexTitle:         *regexTitle,
+		Redirect:           *redirect,
+		StatusOnly:         *statusOnly,
+		Retries:            *retries,
+		Compare:            *compare,
+		RandomIp:           *randomIp,
+	}
+
+	configPost := internal.ParserConfigPost {
+		Endereco: *url,
+		Threads: *threads,
+		Userlist: *userlist,
+		Passlist: *passlist,
+		PayloadTemplate: *payload,
+		MinDelay: minDelay,
+		MaxDelay: maxDelay,
+		Timeout: *timeout,
+		CustomHeaders: customHeader,
+		RandomAgent: *randomAgent,
+		Shuffle: *shuffle,
+		Live: *live,
+		StatusOnly: *statusOnly,
+		RegexBody: *regexBody,
+		RegexTitle: *regexTitle,
+		Silence: *silence,
+	}
+
 	switch chosenMethod {
 	case "GET":
 		if !strings.Contains(*url, "Fuzz") {
 			fmt.Println("\033[31m[ERROR]\033[0m URL must contain 'Fuzz' placeholder")
 			os.Exit(1)
 		}
-		resultado, temp = internal.ParserGET(*url, *threads, *wordlist, minDelay, maxDelay, *timeout, customHeader, valid, *stealth, *proxy, *silence, *live, *bypass, listExtension, *rate, *filterSize, *filterLine, *filterTitle, *randomAgent, *shuffle, *titleContains, *bodyContains, *filterBody, *regexBody, *regexTitle, *redirect, *statusOnly, *retries, *compare, *randomIp)
+		resultado, temp = internal.ParserGET(configGet)
 	case "POST":
-		resultado, temp = internal.ParserPost( *url, *threads, *userlist, *passlist, *payload, minDelay, maxDelay, *timeout, customHeader, *randomAgent, *shuffle, *live, *statusOnly, *regexBody, *regexTitle)
+		if *payload == "" {
+			fmt.Println("\033[31m[ERRO]\033[0m The payload flag cannot be empty")
+			os.Exit(1)
+		}
+		resultado, temp = internal.ParserPost(configPost)
 	}
 
 	resultadoJson := internal.PrepareResultsForJSON(resultado)
@@ -225,9 +297,10 @@ func main() {
 		} else {
 			if chosenMethod != "POST" { 
 				for _, v := range resultado {
-					fmt.Printf("%s[%3d]%s  %-26s Size: %-6dB Lines: %-5d %-6s %-11s\n",
+					fmt.Printf("%s[%3d]%s  %-26s Words: %-6d Size: %-6dB Lines: %-5d %-6s %-11s\n",
 						v.Color, v.Status, internal.Reset,
 						v.URL,
+						v.Text,
 						v.Size,
 						v.Lines,
 						v.Time,
