@@ -34,5 +34,4 @@ type ParserConfigGet struct {
 	FilterCode         map[int]bool
 	Verbose            bool
 	Title              string
-	RedirectDepth              int
 }

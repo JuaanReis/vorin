@@ -257,6 +257,7 @@ func main() {
 		Verbose:         *verbose,
 		Retries:         *retries,
 		Proxy:           *proxy,
+		RateLimit:       *rate,
 	}
 
 	switch chosenMethod {

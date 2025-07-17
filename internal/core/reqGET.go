@@ -137,7 +137,12 @@ func ParserGET(cfg model.ParserConfigGet) ([]model.Resultado, time.Duration) {
 		threadLimiter <- struct{}{}
 		go func(p string) {
 			defer wg.Done()
-			defer func() { <-threadLimiter }()
+			defer func() { 
+				if r := recover(); r != nil {
+					atomic.AddInt32(&errors, 1)
+				}
+				<-threadLimiter
+			}()
 			atomic.AddInt32(&current, 1)
 			atomic.AddInt32(&reqPerSec, 1)
 			if rateLimiter != nil {
@@ -155,6 +160,7 @@ func ParserGET(cfg model.ParserConfigGet) ([]model.Resultado, time.Duration) {
 			start := time.Now()
 			req, err := http.NewRequest("GET", finalURL, nil)
 			if err != nil {
+				atomic.AddInt32(&errors, 1)
 				return
 			}
 
@@ -172,6 +178,7 @@ func ParserGET(cfg model.ParserConfigGet) ([]model.Resultado, time.Duration) {
 
 			body, resp, err := network.GetRequestWithRetry(req, client, reader, cfg.Retries)
 			if err != nil || resp == nil {
+				atomic.AddInt32(&errors, 1)
 				return
 			}
 

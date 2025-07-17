@@ -26,13 +26,22 @@ func ParserPost(cfg model.ParserConfigPost) ([]model.Resultado, time.Duration) {
 	var compiledRegexTitle, compiledRegexBody *regexp.Regexp
 	var err error
 	doneBar := make(chan struct{})
+	var rateLimiter <-chan time.Time
+
 	if cfg.RegexTitle != "" {
 		compiledRegexTitle, err = regexp.Compile("(?i)" + cfg.RegexTitle)
 		print.FatalIfErr(err)
 	}
+
 	if cfg.RegexBody != "" {
 		compiledRegexBody, err = regexp.Compile("(?i)" + cfg.RegexBody)
 		print.FatalIfErr(err)
+	}
+
+	if cfg.RateLimit > 0 {
+		ticker := time.NewTicker(time.Second / time.Duration(cfg.RateLimit))
+		rateLimiter = ticker.C
+		defer ticker.Stop()
 	}
 
 	fakeUser := "__vorin_fake_user_473827382__"
@@ -109,6 +118,10 @@ func ParserPost(cfg model.ParserConfigPost) ([]model.Resultado, time.Duration) {
 					}
 					<-sem
 				}()
+
+				if rateLimiter != nil {
+					<-rateLimiter
+				}
 
 				atomic.AddInt32(&current, 1)
 				atomic.AddInt32(&reqPerSec, 1)

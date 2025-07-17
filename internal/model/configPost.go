@@ -22,4 +22,5 @@ type ParserConfigPost struct {
 	RandomIp        bool
 	Retries         int
 	Proxy           string
+	RateLimit       int
 }
