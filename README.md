@@ -52,7 +52,9 @@
 ```bash
 git clone https://github.com/JuaanReis/vorin.git
 cd vorin
-go build -o vorin
+go build -o vorin ./bin
+cd bin
+./vorin -help
 ```
 `The easiest and most error-free way, I hope`
 
@@ -66,7 +68,7 @@ go install github.com/JuaanReis/vorin@latest
 or
 
 ```bash
-curl -s https://raw.githubusercontent.com/JuaanReis/vorin/cmd/install.sh | bash
+curl -s https://raw.githubusercontent.com/JuaanReis/vorin/cmd/script/install.sh | bash
 ```
 `If you want to download or update vorin`
 
@@ -84,7 +86,7 @@ chmod +x vorin
 `This is a basic example of a scan`
 
 ```bash
-./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -rate 35 -d 0.6-0.7 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -s 200,301,302,403 -proxy socks5://127.0.0.1:9050 -ext .php
+./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -rate 35 -d 0.1-0.1 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -s 200,301,302,403
 ```
 `This is an example of brute force login`
 
@@ -105,14 +107,20 @@ chmod +x vorin
 
 ```
 vorin/
-├── assets/ # Wordlists, banners, and screenshots
-├── cmd/ # bash codes (shell for installation)
-├── config/ # (default customization files)
+├── assets/ # Wordlists, banners, screenshots and version number
+├── bin/ # Here the binaries are stored
+├── cmd/ 
+|     ├── # bash codes (shell for installation) 
+|     └── main.go # Entry point
 ├── internal/ # Core scanner logic (requests, handlers)
-├── pkg/ (files you definitely won't want to redo)
-├── main.go # Entry point
+├── pkg/
+|     └── wordlist.go # Load the wordlist
+├── CONTRIBUTORS.md # Code Rules or How I Made the Tool
+├── LICENSE # License for you not to steal my project
+├── makefile # Code for ease of use
 └── README.md # You're here (I didn't even need to write this)
 ```
+
 > *Making the structure was easier than writing it*
 
 ### Parameters
@@ -140,6 +148,7 @@ vorin/
 | `-ext`     |  Additional extensions, separated by commas (e.g. .php, .bak) | *None*      | `-ext php,bak,txt,tar.gz`  |
 | `-silence` | Hide progress/output until finished                          | `false`                        | `-silence`                                   |
 | `-live`    | Print results immediately when found                         | `false`                        | `-live`                                      |
+| `-no-banner` | Disable banner |  `false`  | `-no-banner` |
 | `-status-only` | The output only returns the status code and the path |  `false`  | `-status-only` |
 | `-stealth` | Enables stealth mode (random headers, delay, etc)           | `false`                        | `-stealth`                                   |
 | `-save-json`       | Path to save results as JSON                                 | *None*                           | `-save-json results.json`                            |
@@ -147,6 +156,7 @@ vorin/
 | `-filter-line` | Filters pages by number of lines |  `0` |   `-filter-line 1`  |
 |  `-filter-title` | Filters page by title  | *None*  | `-filter-title "Error"` |
 | `-filter-body`  | Filter page by words  |  *None*     | `-filter-body "404 Not Found"`  |
+| `-filter-code` | Filter page by status code  | *None* | `-filter-code "404, 500, 505"` |
 | `-shuffle`  | Fhuffle the wordlist  | `false`    |  `-shuffle`    |
 | `-regex-body` | Apply regex to the body | *None*  | `-regex-body "dashboard"` |
 | `-regex-title` | Apply regex to the title | *None* | `-regex-title "admin"`  |
@@ -159,53 +169,11 @@ Below is a real example of the tool running in a test environment, showing detec
 
 > Below is a basic test with GET method (as is visible in the image)
 
-![Scan Example GET](assets/screenshots/v1.3.1/reqGet.png)
+![Scan Example GET](assets/screenshots/v1.3.5/reqGet.png)
 
 > Below is a basic test with the POST method (as it is also visible in the image)
 
-![Scan Example POST](assets/screenshots/v1.3.1/reqPost.png)
-
-> *I did not finish this scan for two reasons (1. I was lazy, 2. I wouldn't find anything since there's no login page)*
- 
-> Below is a scan with stealth mode
-
-![Stealth](assets/screenshots/v1.3.1/stealth.png)
-
-
-Stealth mode comes with the following settings:
-```
-{
-  "threads": 30,
-  "rate": 15r/s,
-  "delay": 0.2s-0.2s,
-  "timeout": 7s,
-  "header": "random",
-  "proxy": "needs to be activated manually"
-}
-```
-
-> Below is a scan with bypass (it is clearly slower)
-
-![Bypass](assets/screenshots/v1.3.1/bypass.png)
-
-*Not all the results of this scan appeared because many paths were discovered*
-
-The bypass configuration is as follows:
-```
-{
-  "threads": 30,
-  "rate": 15r/s,
-  "delay": 0.2s-0.3s,
-  "header" random but different from stealth mode,
-  "proxy" still has to be activated manually (how many times will I have to repeat this?),
-}
-```
-
-> Below is a picture of a scan with all other modes active, it was not finished due to laziness. 
-
-![Monster](assets/screenshots/v1.3.1/bypass_stealth.png)
-
-*I really thought it would take longer, if you can do this test, put the total time here in the readme*
+![Scan Example POST](assets/screenshots/v1.3.5/reqPost.png)
 
 > All tests were performed in a safe and controlled environment, without affecting any real systems.<br>
 > *Please act responsibly — this tool is not a green light for illegal testing.*
@@ -235,6 +203,7 @@ You can save the scan results using the `-save-json` flag:
 ```bash
 ./vorin -u http://example.com/Fuzz -save-json results.json
 ```
+
 *The path must be passed to the flag*
 
 `JSON is formatted and can be saved anywhere.`
@@ -257,12 +226,11 @@ You can save the scan results using the `-save-json` flag:
 ---
 You can use the -silence flag for no output other than the prints at the end, and it has a cool snake animation
 
-Example:
-```
-[Vorin] Running ⠼
-```
+Example: <br><br>
+![Silence output](assets/screenshots/v1.3.5/output.gif)
+
 *I would wear this to school*
-> I know it doesn't look good with code, use vorin just to see the animation (I recommend it)
+
 ## Security & Responsibility
 
 This tool is intended strictly for educational purposes, ethical hacking and professional security testing in authorized environments.

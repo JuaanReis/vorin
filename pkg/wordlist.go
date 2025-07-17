@@ -19,5 +19,4 @@ func ReadLines(path string) ([]string, error) {
     }
 		erro := scanner.Err()
     return lines, erro
-
 }
