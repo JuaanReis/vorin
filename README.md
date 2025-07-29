@@ -68,7 +68,7 @@ go install github.com/JuaanReis/vorin@latest
 or
 
 ```bash
-curl -s https://raw.githubusercontent.com/JuaanReis/vorin/cmd/script/install.sh | bash
+curl -s https://raw.githubusercontent.com/JuaanReis/vorin/main/cmd/script/install.sh | bash
 ```
 `If you want to download or update vorin`
 
