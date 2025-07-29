@@ -4,8 +4,6 @@ git clone https://github.com/JuaanReis/vorin.git
 
 cd vorin
 
-go build -o vorin ./bin
-
-cd ./bin
+go build -o vorin
 
 ./vorin -help

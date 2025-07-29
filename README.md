@@ -86,18 +86,18 @@ chmod +x vorin
 `This is a basic example of a scan`
 
 ```bash
-./vorin -u http://example.com/Fuzz -w path/to/wordlist.txt -t 50 -rate 35 -d 0.1-0.1 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -s 200,301,302,403
+./vorin -u http://example.com/FUZZ -w path/to/wordlist.txt -t 50 -rate 35 -d 0.1-0.1 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -s 200,301,302,403
 ```
 `This is an example of brute force login`
 
 ```bash
-./vorin -method post -u "https:/target.com/login" -userlist users.txt -passlist passwords.txt -P "user=USERFUZZ&password=PASSFUZZ" -t 30 -live
+./vorin -method post -u "https:/target.com/login" -userlist users.txt -passlist passwords.txt -data "user=USERFUZZ&password=PASSFUZZ" -t 30 -live
 ```
 
 ## How it works
 
 *Vorin uses Go's native concurrency to spawn multiple workers that:*
-- Replace the `Fuzz` keyword in the URL
+- Replace the `FUZZ` keyword in the URL
 - Send HTTP GET requests
 - Analyze the response (status, size, title, etc.) and compare it to a random path (it really is random)
 - Display results with clean formatting (with optional silent or active mode) <br>
@@ -107,16 +107,15 @@ chmod +x vorin
 
 ```
 vorin/
-├── assets/ # Wordlists, banners, screenshots and version number
-├── bin/ # Here the binaries are stored
+├── assets/ # banners, screenshots
 ├── cmd/ 
-|     ├── # bash codes (shell for installation) 
-|     └── main.go # Entry point
+|     └── # bash codes (shell for installation) 
 ├── internal/ # Core scanner logic (requests, handlers)
 ├── pkg/
 |     └── wordlist.go # Load the wordlist
 ├── CONTRIBUTORS.md # Code Rules or How I Made the Tool
 ├── LICENSE # License for you not to steal my project
+├── main.go # Entry point
 ├── makefile # Code for ease of use
 └── README.md # You're here (I didn't even need to write this)
 ```
@@ -127,12 +126,12 @@ vorin/
 
 | Flag       | Description                                                  | Default                        | Example                                      |
 |------------|--------------------------------------------------------------|--------------------------------|----------------------------------------------|
-| `-u`       | Target URL (must contain `Fuzz`)                             | *None*                             | `-u https://site.com/Fuzz`                   |
+| `-u`       | Target URL (must contain `FUZZ`)                             | *None*                             | `-u https://site.com/FUZZ`                   |
 | `method` | request Method (POST or GET) | `GET` | `-method POST` |
-| `-userlist` | User wordlist file for POST | [top-usernames-shortlist.txt](http://_vscodecontentref_/0) | `-users.txt` |
-| `-passlist` | Password wordlist file for POST | [rockyou-20.txt](http://_vscodecontentref_/1)  | `-passlist password.txt` |
-| `-P` | POST payload template (`USERFUZZ`, `PASSFUZZ`) | *None* | `-P "user=USERFUZZ&password=PASSFUZZ"` |
-| `-w`       | Path to wordlist                                             | `assets/wordlist/common.txt`   | `-w mylist.txt`                              |
+| `-userlist` | User wordlist file for POST | [top-usernames-shortlist.txt](https://github.com/danielmiessler/SecLists/blob/master/Usernames/top-usernames-shortlist.txt) | `-users.txt` |
+| `-passlist` | Password wordlist file for POST | [rockyou-20.txt](https://github.com/i-forgot-the-repository)  | `-passlist password.txt` |
+| `-data` | POST payload template (`USERFUZZ`, `PASSFUZZ`) | *None* | `-data "user=USERFUZZ&password=PASSFUZZ"` |
+| `-wordlist/-w`       | Path to wordlist                                             | [common.txt](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/common.txt)   | `-w mylist.txt`                              |
 | `-t`       | Number of concurrent threads                                 | `35`                             | `-t 100`                                     |
 | `-d`       | Random delay between requests (e.g. 1-5)                     | `0.1s-0.2s`                           | `-d 1-3`                                     |
 | `-timeout` | Connection timeout                                           | `5s`                           | `-timeout 10`                                |
@@ -140,11 +139,10 @@ vorin/
 | `-rate`    |  Maximum number of requests per second (RPS). Set 0 to disable rate limiting | `25r/s`        |  `-rate 45`   |
 | `-H`       | Custom headers (repeatable)                                  | *None*                           | `-H "X-Test: true"`                          |
 |  `-random-agent` | uses a random user agent per request  | `false`    |   `-random-agent`  |
-|  `-random-ip` | uses a random IP per request | `false` | `-random-ip` |
-| `-s`       | Valid status codes (comma-separated)                         | `200,301,302,401,403`                  | `-s 200,403`                                 |
+|  `-spoof-ip` | uses a random IP per request | `false` | `-spoof-ip` |
+| `-status-code`       | Valid status codes (comma-separated)                         | `200,301,302,401,403`                  | `-status-code 200,403`                                 |
 | `-proxy`   | Proxy URL (supports HTTP/SOCKS5)                             | *None*                           | `-proxy socks5://127.0.0.1:9050`             |
 | `-redirect` |  follow 3xx status code redirects | `false`  | `-redirect`  |
-| `-bypass`  |  Activates bypass techniques  | `false`     | `-bypass` |
 | `-ext`     |  Additional extensions, separated by commas (e.g. .php, .bak) | *None*      | `-ext php,bak,txt,tar.gz`  |
 | `-silence` | Hide progress/output until finished                          | `false`                        | `-silence`                                   |
 | `-live`    | Print results immediately when found                         | `false`                        | `-live`                                      |
@@ -157,11 +155,11 @@ vorin/
 |  `-filter-title` | Filters page by title  | *None*  | `-filter-title "Error"` |
 | `-filter-body`  | Filter page by words  |  *None*     | `-filter-body "404 Not Found"`  |
 | `-filter-code` | Filter page by status code  | *None* | `-filter-code "404, 500, 505"` |
-| `-shuffle`  | Fhuffle the wordlist  | `false`    |  `-shuffle`    |
+| `-shuffle`  | Shuffle the wordlist  | `false`    |  `-shuffle`    |
 | `-regex-body` | Apply regex to the body | *None*  | `-regex-body "dashboard"` |
 | `-regex-title` | Apply regex to the title | *None* | `-regex-title "admin"`  |
 | `-compare` | Path to be compared to wordlist | `Default in the code` | `-compare "a1b2c3d4"` |
-| `-help` | shows all flags and examples | `false` | `-help` |
+| `-help/-h` | shows all flags and examples | `false` | `-help` |
 
 ## Examples
 
@@ -201,7 +199,7 @@ includes
 You can save the scan results using the `-save-json` flag:
 
 ```bash
-./vorin -u http://example.com/Fuzz -save-json results.json
+./vorin -u http://example.com/FUZZ -save-json results.json
 ```
 
 *The path must be passed to the flag*

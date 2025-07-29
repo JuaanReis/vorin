@@ -6,8 +6,8 @@ import (
 )
 
 func Version() string {
-	version, err := os.ReadFile("../assets/version.txt")
+	version, err := os.ReadFile("internal/version.txt")
 	FatalIfErr(err)
 	pack := fmt.Sprintf("Vorin v%s", version)
 	return pack
-} 
+}

@@ -19,12 +19,14 @@ import (
 	"github.com/JuaanReis/vorin/pkg"
 )
 
+
 func ParserPost(cfg model.ParserConfigPost) ([]model.Resultado, time.Duration) {
 	var resultados []model.Resultado
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var compiledRegexTitle, compiledRegexBody *regexp.Regexp
 	var err error
+
 	doneBar := make(chan struct{})
 	var rateLimiter <-chan time.Time
 
@@ -175,7 +177,7 @@ func ParserPost(cfg model.ParserConfigPost) ([]model.Resultado, time.Duration) {
 				text := collector.CountWords(word)
 
 				if content == fakeContent || title == fakeTitle || size == fakeSize || resp.StatusCode == fakeStatus {
-					
+					return
 				}
 
 				if compiledRegexTitle != nil && !compiledRegexTitle.MatchString(title) {

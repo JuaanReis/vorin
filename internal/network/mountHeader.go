@@ -2,8 +2,6 @@ package network
 
 import (
 	"net/http"
-
-	"github.com/JuaanReis/vorin/internal/modules"
 )
 
 func MountHeaders(req *http.Request, path string, stealth, bypass bool, custom map[string]string) {
@@ -11,12 +9,6 @@ func MountHeaders(req *http.Request, path string, stealth, bypass bool, custom m
 
 	if stealth {
 		for k, v := range GetRandomHeaders() {
-			headers[k] = v
-		}
-	}
-
-	if bypass {
-		for k, v := range modules.BuildBypassHeaders(path) {
 			headers[k] = v
 		}
 	}

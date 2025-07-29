@@ -1,17 +1,16 @@
-.PHONY: build clean rebuild install
+.PHONY: build clean rebuild run
 
 BIN_NAME=vorin
 OUT_DIR=./cmd
 BIN_DIR=bin
 
 build:
-	mkdir -p $(BIN_DIR)
-	go build -o $(BIN_DIR)/$(BIN_NAME) $(OUT_DIR)
+	go build -o $(BIN_NAME) 
 
 clean:
-	rm -rf $(BIN_DIR)/$(BIN_NAME)
+	rm -rf $(BIN_NAME)
 
 rebuild: clean build
 
-install:
-	bash cmd/script/install.sh
+run:
+	./$(BIN_NAME) 

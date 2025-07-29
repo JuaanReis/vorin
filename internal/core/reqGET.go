@@ -65,11 +65,7 @@ func ParserGET(cfg model.ParserConfigGet) ([]model.Resultado, time.Duration) {
 
 	var finalPaths []string
 	for _, path := range file {
-		if cfg.Bypass {
-			finalPaths = append(finalPaths, modules.ApplyBypassTechniques(path)...)
-		} else {
-			finalPaths = append(finalPaths, path)
-		}
+		finalPaths = append(finalPaths, path)
 	}
 
 	client := &http.Client{
@@ -91,7 +87,7 @@ func ParserGET(cfg model.ParserConfigGet) ([]model.Resultado, time.Duration) {
 		fakePath = "__vorin_this_should_not_exist_40028922__"
 	}
 
-	enderecoBase := strings.Replace(cfg.Endereco, "Fuzz", "", -1)
+	enderecoBase := strings.Replace(cfg.Endereco, "FUZZ", "", -1)
 	pathAle := strings.TrimRight(enderecoBase, "/") + "/" + fakePath
 	respAle, err := http.Get(pathAle)
 	print.FatalIfErr(err)
@@ -131,39 +127,35 @@ func ParserGET(cfg model.ParserConfigGet) ([]model.Resultado, time.Duration) {
 	if !cfg.Silence {
 		go print.UpdateProgressBar(totalPaths, &current, &errors, &reqPerSec, startTime, doneBar)
 	}
-
-	for _, p := range finalPaths {
-		wg.Add(1)
-		threadLimiter <- struct{}{}
-		go func(p string) {
-			defer wg.Done()
-			defer func() { 
-				if r := recover(); r != nil {
-					atomic.AddInt32(&errors, 1)
+		for _, p := range finalPaths {
+			wg.Add(1)
+			threadLimiter <- struct{}{}
+			go func(p string) {
+				defer wg.Done()
+				defer func() { 
+					if r := recover(); r != nil {
+						atomic.AddInt32(&errors, 1)
+					}
+					<-threadLimiter
+				}()
+				atomic.AddInt32(&current, 1)
+				atomic.AddInt32(&reqPerSec, 1)
+				if rateLimiter != nil {
+					<-rateLimiter
 				}
-				<-threadLimiter
-			}()
-			atomic.AddInt32(&current, 1)
-			atomic.AddInt32(&reqPerSec, 1)
-			if rateLimiter != nil {
-				<-rateLimiter
-			}
-
 			if cfg.Stealth || (cfg.MinDelay > 0 && cfg.MaxDelay > 0) {
 				delayRange := cfg.MaxDelay - cfg.MinDelay
 				delay := cfg.MinDelay + rand.Float64()*delayRange
 				jitter := rand.Float64() * 0.1
 				time.Sleep(time.Duration((delay + jitter) * float64(time.Second)))
 			}
-
-			finalURL := strings.Replace(cfg.Endereco, "Fuzz", p, -1)
+			finalURL := strings.Replace(cfg.Endereco, "FUZZ", p, -1)
 			start := time.Now()
 			req, err := http.NewRequest("GET", finalURL, nil)
 			if err != nil {
 				atomic.AddInt32(&errors, 1)
 				return
 			}
-
 			network.MountHeaders(req, p, cfg.Stealth, cfg.Bypass, cfg.CustomHeaders)
 			if cfg.RandomIp && (!cfg.Bypass || !cfg.Stealth) {
 				ip := modules.RandomIP()
@@ -171,17 +163,14 @@ func ParserGET(cfg model.ParserConfigGet) ([]model.Resultado, time.Duration) {
 				req.Header.Set("X-Forwarded-For", ip)
 				req.Header.Set("CF-Connecting-IP", ip)
 			}
-
 			if cfg.RandomAgent && (!cfg.Bypass || !cfg.Stealth) {
 				req.Header.Set("User-Agent", modules.RandomUserAgent())
 			}
-
 			body, resp, err := network.GetRequestWithRetry(req, client, reader, cfg.Retries)
 			if err != nil || resp == nil {
 				atomic.AddInt32(&errors, 1)
 				return
 			}
-
 			lines, structureSize, title, htmlSize, content, text := collector.DataTaget(body)
 			elapsed := time.Since(start)
 			mustMatch := true
@@ -193,15 +182,12 @@ func ParserGET(cfg model.ParserConfigGet) ([]model.Resultado, time.Duration) {
 			}
 			matchRegexTitle := true
 			matchRegexBody := true
-
 			if compiledRegexTitle != nil && !compiledRegexTitle.MatchString(title) {
 				matchRegexTitle = false
 			}
-
 			if compiledRegexBody != nil && !compiledRegexBody.MatchString(content) {
 				matchRegexBody = false
 			}
-
 			tm := elapsed.Truncate(time.Millisecond)
 			statusLabel, color := print.StatusColor(resp.StatusCode)
 			if collector.IsSameContent(title, titleAle, cfg, htmlSize, lines, structureSize, fakeStructureSize, content) {
@@ -230,7 +216,6 @@ func ParserGET(cfg model.ParserConfigGet) ([]model.Resultado, time.Duration) {
 							)
 							fmt.Printf(" ├─ URL     : %s\n", finalURL)
 							fmt.Printf(" ├─ FUZZ    : %s\n", p)
-
 							if title != "" {
 								fmt.Printf(" └─ Title   : %s\n\n", title)
 							}
