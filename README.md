@@ -36,6 +36,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/JuaanReis/vorin)](https://github.com/JuaanReis/vorin/commits/main) &nbsp;
 [![Go Version](https://img.shields.io/badge/Go-1.22.3+-000000.svg)](https://golang.org/)
 [![License: GPL](https://img.shields.io/badge/License-GPL-blue.svg)](LICENSE) &nbsp;
+[![Go Report Card](https://goreportcard.com/badge/github.com/JuaanReis/vorin)](https://goreportcard.com/report/github.com/JuaanReis/vorin)
 [![Play Random Video](https://img.shields.io/badge/VORIN-TV1-darkred?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=dQw4w9WgXcQ) &nbsp;
 [![Play Random Video](https://img.shields.io/badge/VORIN-TV2-darkred?style=flat-square&logo=youtube)](https://www.youtube.com/watch?v=QwLvrnlfdNo)
 
