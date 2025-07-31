@@ -3,6 +3,8 @@
 
 # Vorin - Web Directory & Admin Scanner
 
+*_A fast and flexible web fuzzing tool written in Go_*
+
 **Vorin** is a web directory and admin path scanner tool written in Go. It's built for speed, simplicity, and clean output. Inspired by tools like Gobuster and FFUF, but with its own unique style.
 
   - Search and find hidden directories.
