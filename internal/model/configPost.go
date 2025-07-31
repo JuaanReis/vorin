@@ -23,4 +23,6 @@ type ParserConfigPost struct {
 	Retries         int
 	Proxy           string
 	RateLimit       int
+	Cookies         map[string]string
+	Calibrate       bool
 }

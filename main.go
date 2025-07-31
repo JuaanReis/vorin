@@ -46,6 +46,7 @@ func main() {
 	}
 
 	customHeader := print.ParseHeaderFlags(cfg.HeaderFlags)
+	customCookie := print.ParseCookiesFlags(cfg.Cookies)
 
 	if cfg.Stealth {
 		if cfg.Rate == 0 {
@@ -85,10 +86,8 @@ func main() {
 	} else {
 		rateStr = "0"
 	}
-
-	if cfg.OutputFile == "" {
-		print.PrintHeader(bannerString, cfg.URL, cfg.Wordlist, strconv.Itoa(cfg.Threads), delayStr, fmt.Sprintf("%ds", cfg.Timeout), customHeader, valid, cfg.Stealth, cfg.Proxy, cfg.Silence, cfg.Extension, rateStr, cfg.FilterBody, cfg.FilterTitle, cfg.FilterLine, cfg.FilterSize, cfg.Shuffle, cfg.RandomAgent, cfg.Live, cfg.BodyContains, cfg.TitleContains, cfg.RegexBody, cfg.RegexTitle, cfg.StatusOnly, cfg.Retries, cfg.Compare, cfg.RandomIp, chosenMethod, cfg.Payload, cfg.Userlist, cfg.Passlist, cfg.Redirect, cfg.NoBanner, cfg.FilterCodeFlags, cfg.Verbose)
-	}
+	
+	print.PrintHeader(bannerString, cfg.URL, cfg.Wordlist, strconv.Itoa(cfg.Threads), delayStr, fmt.Sprintf("%ds", cfg.Timeout), customHeader, valid, cfg.Stealth, cfg.Proxy, cfg.Silence, cfg.Extension, rateStr, cfg.FilterBody, cfg.FilterTitle, cfg.FilterLine, cfg.FilterSize, cfg.Shuffle, cfg.RandomAgent, cfg.Live, cfg.RegexBody, cfg.RegexTitle, cfg.StatusOnly, cfg.Retries, cfg.Compare, cfg.RandomIp, chosenMethod, cfg.Payload, cfg.Userlist, cfg.Passlist, cfg.Redirect, cfg.NoBanner, cfg.FilterCodeFlags, cfg.Verbose, customCookie, cfg.Calibrate)
 
 	if !cfg.Silence {
 		fmt.Println()
@@ -138,8 +137,6 @@ func main() {
 		FilterTitle:        cfg.FilterTitle,
 		RandomAgent:        cfg.RandomAgent,
 		Shuffle:            cfg.Shuffle,
-		FilterTitleContent: cfg.TitleContains,
-		FilterBodyContent:  cfg.BodyContains,
 		FilterBody:         cfg.FilterBody,
 		RegexBody:          cfg.RegexBody,
 		RegexTitle:         cfg.RegexTitle,
@@ -150,6 +147,8 @@ func main() {
 		RandomIp:           cfg.RandomIp,
 		FilterCode:         filterCode,
 		Verbose:            cfg.Verbose,
+		Cookies:            customCookie,
+		Calibrate:          cfg.Calibrate,
 	}
 
 	configPost := model.ParserConfigPost{
@@ -174,6 +173,8 @@ func main() {
 		Retries:         cfg.Retries,
 		Proxy:           cfg.Proxy,
 		RateLimit:       cfg.Rate,
+		Cookies:         customCookie,
+		Calibrate:       cfg.Calibrate,
 	}
 
 	switch chosenMethod {

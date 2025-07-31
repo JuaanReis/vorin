@@ -34,4 +34,6 @@ type ParserConfigGet struct {
 	FilterCode         map[int]bool
 	Verbose            bool
 	Title              string
+	Cookies            map[string]string
+	Calibrate          bool
 }

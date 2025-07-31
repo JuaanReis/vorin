@@ -5,35 +5,45 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
+	"golang.org/x/net/proxy"
 	"github.com/JuaanReis/vorin/internal/print"
 )
 
-func CreateClientProxy(proxy string, timeout int) *http.Client {
-	if proxy == "" {
-		return &http.Client{
-			Timeout: time.Duration(timeout) * time.Second,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
+func CreateClientProxy(proxyStr string, timeout int) *http.Client {
+	var transport *http.Transport
+
+	if proxyStr == "" {
+		transport = &http.Transport{}
+	} else if strings.HasPrefix(proxyStr, "socks5://") {
+		addr := strings.TrimPrefix(proxyStr, "socks5://")
+		dialer, err := proxy.SOCKS5("tcp", addr, nil, proxy.Direct)
+		if err != nil {
+			fmt.Printf("[ERROR] SOCKS5 dialer failed: %v\n", err)
+			os.Exit(1)
+		}
+
+		transport = &http.Transport{
+			Dial: dialer.Dial,
+		}
+	} else {
+		proxyURL, err := url.Parse(proxyStr)
+		if err != nil {
+			fmt.Printf("[ERROR] Invalid proxy URL: %v\n", err)
+			os.Exit(1)
+		}
+		transport = &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
 		}
 	}
 
-	proxyUrl, err := url.Parse(proxy)
-	if err != nil {
-		fmt.Printf("[ERROR] Invalid proxy: %v\n", err)
-		os.Exit(1)
+	testClient := &http.Client{
+		Transport: transport,
+		Timeout:   10 * time.Second,
 	}
 
-	transport := &http.Transport{
-		Proxy:               http.ProxyURL(proxyUrl),
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 100,
-		IdleConnTimeout:     90 * time.Second,
-	}
-
-	testClient := &http.Client{Transport: transport, Timeout: 5 * time.Second}
-	testReq, _ := http.NewRequest("GET", "https://www.google.com/", nil)
+	testReq, _ := http.NewRequest("GET", "http://check.torproject.org", nil)
 	resp, err := testClient.Do(testReq)
 	print.FatalIfErr(err)
 	resp.Body.Close()

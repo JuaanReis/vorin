@@ -9,12 +9,16 @@ import (
 )
 
 func SaveJson(cfg flags.CLIConfig, resultadoJson any) {
-	if cfg.OutputFile != "" {
-		err := output.SaveJson([]model.ResultadoJSON{}, cfg.OutputFile)
-		if err != nil {
-			fmt.Printf("Error saving JSON to %s: %v\n", cfg.OutputFile, err)
-			os.Exit(1)
-		}
-		fmt.Printf("Results saved to %s\n", cfg.OutputFile)
+	res, ok := resultadoJson.([]model.ResultadoJSON)
+	if !ok {
+		fmt.Println("[ERROR] Failed to convert resultJson to []model.ResultadoJSON")
+		return
 	}
+
+	err := output.SaveJson(res, cfg.OutputFile)
+	if err != nil {
+		fmt.Printf("Error saving JSON to %s: %v\n", cfg.OutputFile, err)
+		os.Exit(1)
+	}
+	fmt.Printf("Result saved in %s\n", cfg.OutputFile)
 }

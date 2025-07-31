@@ -14,7 +14,6 @@ tests/
 /coverage.out
 
 vendor/
-less/
 
 .vscode/
 .idea/

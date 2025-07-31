@@ -16,16 +16,25 @@ func HeadersToString(headers map[string]string) string {
 	return strings.TrimSuffix(str, ", ")
 }
 
+func CookiesToString(cookies map[string]string) string {
+	var parts []string
+	for k, v := range cookies {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
+	}
+	return strings.Join(parts, "; ")
+}
+
+
 func PrintHeader(
 	banner string, url, wordlist, threads, delay, timeout string,
 	header map[string]string, valid map[int]bool,
 	stealth bool, proxy string, silence bool,
 	extension, rate, filterT, filterB string,
-	filterL, filterS int, shuffle, randomAgent, live bool,
-	contentB, contentT, regexB, regexT string,
+	filterL, filterS int, shuffle, randomAgent, live bool, regexB, regexT string,
 	statusOnly bool, retries int, compare string,
 	randomIp bool, method, payload, userlist, passlist string,
-	redirect, logo bool, filterCode string, verbose bool,) {
+	redirect, logo bool, filterCode string, verbose bool, cookies map[string]string,
+	calibrate bool) {
 	pack := Version()
 
 	if silence {
@@ -66,6 +75,9 @@ func PrintHeader(
 	}
 	if stealth {
 		PrintInfo("\033[31mStealth\033[0m", "Activate", 27)
+	}
+	if calibrate {
+		PrintInfo("Calibrate", "Activate", 18)
 	}
 
 	// Target & Config
@@ -118,18 +130,16 @@ func PrintHeader(
 		}
 	}
 
+	if len(cookies) > 0 {
+		PrintInfo("Cookies", CookiesToString(cookies), 18)
+	}
+
 	// Proxy
 	if proxy != "" {
-		PrintInfo("\033[31mProxy\033[0m", proxy, 18)
+		PrintInfo("\033[31mProxy\033[0m", proxy, 27)
 	}
 
 	// Filters
-	if contentT != "" {
-		PrintInfo("Content title", contentT, 18)
-	}
-	if contentB != "" {
-		PrintInfo("Content body", contentB, 18)
-	}
 	if filterB != "" {
 		PrintInfo("Filter body", filterB, 18)
 	}

@@ -86,7 +86,7 @@ chmod +x vorin
 `This is a basic example of a scan`
 
 ```bash
-./vorin -u http://example.com/FUZZ -w path/to/wordlist.txt -t 50 -rate 35 -d 0.1-0.1 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -s 200,301,302,403
+./vorin -u http://example.com/FUZZ -w path/to/wordlist.txt -t 50 -rate 35 -d 0.1-0.1 -H "X-Debug: true" -H "Authorization: Bearer teste123" -shuffle -timeout 5 -sc 200,301,302,403
 ```
 `This is an example of brute force login`
 
@@ -126,39 +126,39 @@ vorin/
 
 | Flag       | Description                                                  | Default                        | Example                                      |
 |------------|--------------------------------------------------------------|--------------------------------|----------------------------------------------|
-| `-u`       | Target URL (must contain `FUZZ`)                             | *None*                             | `-u https://site.com/FUZZ`                   |
-| `method` | request Method (POST or GET) | `GET` | `-method POST` |
-| `-userlist` | User wordlist file for POST | [top-usernames-shortlist.txt](https://github.com/danielmiessler/SecLists/blob/master/Usernames/top-usernames-shortlist.txt) | `-users.txt` |
-| `-passlist` | Password wordlist file for POST | [rockyou-20.txt](https://github.com/i-forgot-the-repository)  | `-passlist password.txt` |
+| `-u/url`       | Target URL (must contain `FUZZ`)                             | *None*                             | `-u https://site.com/FUZZ`                   |
+| `-method/X` | request Method (POST or GET) | `GET` | `-method POST` |
+| `-userlist/ul` | User wordlist file for POST | [top-usernames-shortlist.txt](https://github.com/danielmiessler/SecLists/blob/master/Usernames/top-usernames-shortlist.txt) | `-users.txt` |
+| `-passlist/pl` | Password wordlist file for POST | [rockyou-20.txt](https://github.com/i-forgot-the-repository)  | `-passlist password.txt` |
 | `-data` | POST payload template (`USERFUZZ`, `PASSFUZZ`) | *None* | `-data "user=USERFUZZ&password=PASSFUZZ"` |
 | `-wordlist/-w`       | Path to wordlist                                             | [common.txt](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/common.txt)   | `-w mylist.txt`                              |
-| `-t`       | Number of concurrent threads                                 | `35`                             | `-t 100`                                     |
-| `-d`       | Random delay between requests (e.g. 1-5)                     | `0.1s-0.2s`                           | `-d 1-3`                                     |
-| `-timeout` | Connection timeout                                           | `5s`                           | `-timeout 10`                                |
+| `-t/thread`       | Number of concurrent threads                                 | `35`                             | `-t 100`                                     |
+| `-d/delay`       | Random delay between requests (e.g. 1-5)                     | `0.1s-0.2s`                           | `-d 1-3`                                     |
+| `-timeout/T` | Connection timeout                                           | `5s`                           | `-timeout 10`                                |
 | `-retries` | Number of attempts for a request | `0`  | `-retries 2` |
 | `-rate`    |  Maximum number of requests per second (RPS). Set 0 to disable rate limiting | `25r/s`        |  `-rate 45`   |
 | `-H`       | Custom headers (repeatable)                                  | *None*                           | `-H "X-Test: true"`                          |
 |  `-random-agent` | uses a random user agent per request  | `false`    |   `-random-agent`  |
 |  `-spoof-ip` | uses a random IP per request | `false` | `-spoof-ip` |
-| `-status-code`       | Valid status codes (comma-separated)                         | `200,301,302,401,403`                  | `-status-code 200,403`                                 |
+| `-status-code/sc`       | Valid status codes (comma-separated)                         | `200,301,302,401,403`                  | `-sc 200,403`                                 |
 | `-proxy`   | Proxy URL (supports HTTP/SOCKS5)                             | *None*                           | `-proxy socks5://127.0.0.1:9050`             |
 | `-redirect` |  follow 3xx status code redirects | `false`  | `-redirect`  |
-| `-ext`     |  Additional extensions, separated by commas (e.g. .php, .bak) | *None*      | `-ext php,bak,txt,tar.gz`  |
+| `-calibrate/C`     |  Calibrates false path responses  | `false`     | `-C`  |
 | `-silence` | Hide progress/output until finished                          | `false`                        | `-silence`                                   |
 | `-live`    | Print results immediately when found                         | `false`                        | `-live`                                      |
 | `-no-banner` | Disable banner |  `false`  | `-no-banner` |
 | `-status-only` | The output only returns the status code and the path |  `false`  | `-status-only` |
 | `-stealth` | Enables stealth mode (random headers, delay, etc)           | `false`                        | `-stealth`                                   |
-| `-save-json`       | Path to save results as JSON                                 | *None*                           | `-save-json results.json`                            |
-| `-filter-size`  | Filter pages by size | `0`      |  `-filter-size  2`  |
-| `-filter-line` | Filters pages by number of lines |  `0` |   `-filter-line 1`  |
-|  `-filter-title` | Filters page by title  | *None*  | `-filter-title "Error"` |
-| `-filter-body`  | Filter page by words  |  *None*     | `-filter-body "404 Not Found"`  |
-| `-filter-code` | Filter page by status code  | *None* | `-filter-code "404, 500, 505"` |
+| `-save-json/o`       | Path to save results as JSON                                 | *None*                           | `-save-json results.json`                            |
+| `-filter-size/fc`  | Filter pages by size | `0`      |  `-filter-size  2`  |
+| `-filter-line/fl` | Filters pages by number of lines |  `0` |   `-filter-line 1`  |
+|  `-filter-title/ft` | Filters page by title  | *None*  | `-filter-title "Error"` |
+| `-filter-body/fb`  | Filter page by words  |  *None*     | `-filter-body "404 Not Found"`  |
+| `-filter-code/fc` | Filter page by status code  | *None* | `-filter-code "404, 500, 505"` |
 | `-shuffle`  | Shuffle the wordlist  | `false`    |  `-shuffle`    |
-| `-regex-body` | Apply regex to the body | *None*  | `-regex-body "dashboard"` |
-| `-regex-title` | Apply regex to the title | *None* | `-regex-title "admin"`  |
-| `-compare` | Path to be compared to wordlist | `Default in the code` | `-compare "a1b2c3d4"` |
+| `-regex-body/rb` | Apply regex to the body | *None*  | `-regex-body "dashboard"` |
+| `-regex-title/rt` | Apply regex to the title | *None* | `-regex-title "admin"`  |
+| `-compare/c` | Path to be compared to wordlist | `Default in the code` | `-compare "a1b2c3d4"` |
 | `-help/-h` | shows all flags and examples | `false` | `-help` |
 
 ## Examples
